@@ -654,9 +654,14 @@ package() {
            <?php phpinfo(); ?>
 	2. [ ] http://localhost/test.php
      7. [ ] file:/etc/php/php.ini
-	
 * DEBUGGING
   
-* TESTING  
+* TODO TESTING
+** 2014-09-03
+   1. [ ] Install base Arch Linux
+   2. [ ] Step by step
+      
+* TODO OTHER DISTROS
+   
 * TDW
   1. makepkg --geninteg
