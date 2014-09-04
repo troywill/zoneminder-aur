@@ -660,7 +660,7 @@ package() {
 ** 2014-09-03
    1. [ ] Install base Arch Linux
    2. [ ] Step by step
-      
+   3. [ ] Document apache configuration files
 * TODO OTHER DISTROS
    
 * TDW
