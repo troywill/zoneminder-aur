@@ -89,25 +89,25 @@
     optdepends=(
         netpbm
     )
-
   #+END_SRC
 * SOURCES
   See https://github.com/ZoneMinder/ZoneMinder/releases
   
   #+NAME: SOURCES
   #+BEGIN_SRC sh
-    source=(
-        https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
-        httpd-zoneminder.conf
-        zoneminder
-        zoneminder.service
-    )
-
+        source=(
+            https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+            httpd-zoneminder.conf
+            zoneminder
+            zoneminder.service
+        )
+    
     sha512sums=('8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
-                '3f4c45848cad1362a62e3aaed73963517d131c892afdccc940dc9033734bd66b11e3e20d651416373d4353ef0a88d3de541720dd9df955d498c52cb3720160c2'
+                'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
                 '7ab671aebf821fa97affc490f101af84b934cef1f7c905d5779bb3bb94ee8cc25c1ec6be63b4aee662ba3e92c2e9044432e0c580640849a1eb3d7fca06a35dd2'
                 'd04aede00d2f008e7851f69a62633f27d4f747b6fa4350e3096415cc7c2659d677707af3e397295010fa05794ff9cbb995c3904e6989ebfbd58ba6b4bfcc002c')
   #+END_SRC
+  
 ** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
   #+NAME: httpd-zoneminder.conf
   #+BEGIN_SRC conf :tangle zoneminder/httpd-zoneminder.conf :padline no
@@ -604,11 +604,11 @@ package() {
    1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
 * Step by step
   1. [ ] cd zoneminder && makepkg --syncdeps
-  2. [ ] pacman --upgrade
-  3. [ ] Mysql (see zoneminder.install)
-     1. [ ] Start mysql server
-     2. [ ] add Zoneminder database
-	1. [ ] typing (with passsword):
+  2. [X] pacman --upgrade zoneminder
+  3. [X] Mysql (see zoneminder.install)
+     1. [X] Start mysql server
+     2. [X] add Zoneminder database
+	1. [X] typing (with passsword):
 	   #+BEGIN_SRC sh
              mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
              cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
@@ -618,8 +618,8 @@ package() {
      ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f reload"
      ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf"
      ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
-  4. [ ] sudo systemctl start zoneminder
-     1. [ ] DEBUG: sudo systemctl status zoneminder.service
+  4. [X] sudo systemctl start zoneminder
+     1. [X] DEBUG: sudo systemctl status zoneminder.service
 	● zoneminder.service - Capture, analyse, record and monitor video security cameras
 	Loaded: loaded (/usr/lib/systemd/system/zoneminder.service; disabled)
 	Active: failed (Result: exit-code) since Wed 2014-09-03 18:15:50 PDT; 47s ago
@@ -636,7 +636,7 @@ package() {
 	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: Compilation failed in require at /usr/bin/zmpkg.pl line 37.
 	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/bin/zmpkg.pl line 37.
 	Hint: Some lines were ellipsized, use -l to show in full.
-  5. [ ] sudo systemctl enable zoneminder
+  5. [X] sudo systemctl enable zoneminder
   6. [ ] PHP See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
      1. [ ] PHP - mod_mpm_prefork file:/etc/httpd/conf/httpd.conf See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
 	To use mod_mpm_prefork, open /etc/httpd/conf/httpd.conf and replace
@@ -678,12 +678,20 @@ package() {
 	    #+BEGIN_SRC sh
               pacman --sync php php-apache
 	    #+END_SRC
-         3. [ ] add these lines to file:/etc/httpd/conf/httpd.conf:
-	    1. [ ] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+         3. [ ] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
+	    #+BEGIN_SRC conf
+              LoadModule mpm_event_module modules/mod_mpm_event.so
+	    #+END_SRC
+	    with
+	    #+BEGIN_SRC conf
+              LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+	    #+END_SRC
+         3. [X] add these lines to file:/etc/httpd/conf/httpd.conf:
+	    1. [X] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
 	       #+BEGIN_SRC conf
 	         LoadModule php5_module modules/libphp5.so
 	       #+END_SRC
-	    2. [ ] Place this at the end of the Include list:
+	    2. [X] Place this at the end of the Include list:
 	       #+BEGIN_SRC conf
 	         Include conf/extra/php5_module.conf
 	       #+END_SRC
@@ -696,3 +704,4 @@ package() {
    
 * TDW
   1. makepkg --geninteg
+  2. makepkg --syncdeps
