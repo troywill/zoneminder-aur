@@ -1,0 +1,642 @@
+* Introduction
+* CONTRIBUTORS
+  #+NAME: CONTRIBUTORS
+  #+BEGIN_SRC sh
+    # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
+    # Contributor: Jacek Burghardt           <jacek@hebe.us>
+    # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
+    # Contributor: Jason Gardner             <buhrietoe@gmail.com>
+    # Contributor: Ross melin                <rdmelin@gmail.com>
+    # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
+    # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+  #+END_SRC
+* PACKAGE DATA
+  #+NAME: PACKAGE_VERSION_DATA
+  #+BEGIN_SRC sh
+    pkgbase=zoneminder
+    pkgname=zoneminder
+    pkgver=1.27.0
+    pkgrel=1
+    pkgdesc='Capture, analyse, record and monitor video security cameras'
+    arch=( i686 x86_64 mips64el arm )
+  #+END_SRC
+* DEPENDENCIES
+
+  #+NAME: DEPENDENCIES-2014-09-03
+  #+BEGIN_SRC sh
+    depends=(
+        apache
+        cambozola
+        gnutls
+        mariadb
+        perl-archive-zip
+        perl-date-manip
+        perl-dbd-mysql
+        perl-dbi
+        perl-expect
+        perl-libwww
+        perl-mime-lite
+        perl-mime-tools
+        perl-php-serialization
+        perl-net-sftp-foreign
+        perl-sys-mmap
+        perl-time-modules
+        perl-x10
+        php
+        php-apache
+        php-gd
+        php-mcrypt
+    )
+
+    makedepends=(
+        netpbm
+    )
+
+    optdepends=(
+        netpbm
+    )
+  #+END_SRC
+  #+NAME: DEPENDENCIES
+  #+BEGIN_SRC sh
+    depends=(
+        apache
+        #cambozola
+        gnutls
+        mariadb
+        perl-archive-zip
+        perl-date-manip
+        perl-dbd-mysql
+        perl-dbi
+        #perl-expect
+        perl-libwww
+        perl-mime-lite
+        perl-mime-tools
+        #perl-php-serialization
+        #perl-net-sftp-foreign
+        perl-sys-mmap
+        perl-time-modules
+        #perl-x10
+        php
+        php-apache
+        php-gd
+        php-mcrypt
+    )
+
+    makedepends=(
+        netpbm
+    )
+
+    optdepends=(
+        netpbm
+    )
+
+  #+END_SRC
+* SOURCES
+  See https://github.com/ZoneMinder/ZoneMinder/releases
+  
+  #+NAME: SOURCES
+  #+BEGIN_SRC sh
+    source=(
+        https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+        httpd-zoneminder.conf
+        zoneminder
+        zoneminder.service
+    )
+
+    sha512sums=('8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
+                '3f4c45848cad1362a62e3aaed73963517d131c892afdccc940dc9033734bd66b11e3e20d651416373d4353ef0a88d3de541720dd9df955d498c52cb3720160c2'
+                '7ab671aebf821fa97affc490f101af84b934cef1f7c905d5779bb3bb94ee8cc25c1ec6be63b4aee662ba3e92c2e9044432e0c580640849a1eb3d7fca06a35dd2'
+                'd04aede00d2f008e7851f69a62633f27d4f747b6fa4350e3096415cc7c2659d677707af3e397295010fa05794ff9cbb995c3904e6989ebfbd58ba6b4bfcc002c')
+  #+END_SRC
+** httpd-zoneminder.conf
+  #+NAME: httpd-zoneminder.conf
+  #+BEGIN_SRC conf :tangle zoneminder/httpd-zoneminder.conf
+    # /etc/httpd/conf/extra/httpd-zm.conf
+    # Config for zoneminder web app
+
+    Alias /zm "/srv/http/zoneminder"
+    <Directory "/srv/http/zoneminder">
+      Options -Indexes +MultiViews +FollowSymLinks
+      AllowOverride None
+      Order allow,deny
+      Allow from all
+      # The code unfortunately uses short tags in many places
+      php_value short_open_tag On
+    </Directory>
+
+    ScriptAlias /cgi-bin "/srv/http/cgi-bin"
+    <Directory "/srv/http/cgi-bin">
+      AllowOverride None
+      Options +ExecCGI +FollowSymLinks
+      Order allow,deny
+      Allow from all
+    </Directory>
+
+  #+END_SRC
+** zoneminder
+  #+NAME: zoneminder
+  #+BEGIN_SRC sh :tangle zoneminder/zoneminder :shebang #!/bin/bash
+    daemon_name=zm
+
+    . /etc/rc.conf
+    . /etc/rc.d/functions
+
+    case "$1" in
+        start)
+            stat_busy "Starting Zoneminder"
+            /usr/bin/zmfix -a
+            if /usr/bin/zmpkg.pl start >/dev/null ; then
+                add_daemon $daemon_name
+                stat_done
+            else
+                stat_fail
+                exit 1
+            fi
+            ;;
+        
+        stop)
+            stat_busy "Stopping Zoneminder"
+            if /usr/bin/zmpkg.pl stop >/dev/null ; then
+                rm_daemon $daemon_name
+                stat_done
+            else
+                stat_fail
+                exit 1
+            fi
+            ;;
+        
+        reload)
+            stat_busy "Reloading Zoneminder"
+            if /usr/bin/zmpkg.pl graceful >/dev/null ; then
+                add_daemon $daemon_name
+                stat_done
+            else
+                stat_fail
+                exit 1
+            fi
+            ;;
+        
+        restart)
+            stat_busy "Restarting Zoneminder"
+            if /usr/bin/zmpkg.pl restart >/dev/null ; then
+                add_daemon $daemon_name
+                stat_done
+            else
+                stat_fail
+                exit 1
+            fi
+            ;;
+        
+        status)
+            stat_busy "Checking Zoneminder status";
+            ck_status $daemon_name
+            ;;
+        
+        ,*)
+            echo "usage: $0 {start|stop|reload|restart|status}"
+    esac
+
+    exit 0
+  #+END_SRC
+** zoneminder.service
+  #+NAME: zoneminder.service
+  #+BEGIN_SRC conf :tangle zoneminder/zoneminder.service
+    [Unit]
+    Description=Capture, analyse, record and monitor video security cameras
+    After=network.target remote-fs.target
+    Required=mysqld.service
+
+    [Service]
+    Type=forking
+    ExecStart=/usr/bin/zmpkg.pl start
+    ExecRestart=/usr/bin/zmpkg.pl restart
+    ExecStop=/usr/bin/zmpkg.pl stop
+
+    [Install]
+    WantedBy=multi-user.target
+  #+END_SRC
+** zoneminder.install
+  #+NAME: zoneminder.install
+  #+BEGIN_SRC sh :tangle zoneminder/zoneminder.install
+    pre_install() {
+        set -e
+        abort=false
+        if [ -L /srv/http/zoneminder/events ]; then
+            l=$(readlink /srv/http/zoneminder/events)
+            if [ $l != /var/cache/zoneminder/events ]; then
+                abort=true
+            fi
+        fi
+        if [ -L /srv/http/zoneminder/images ]; then
+            l=$(readlink /srv/http/zoneminder/images)
+            if [ $l != /var/cache/zoneminder/images ]; then
+                abort=true
+            fi
+        fi
+        if [ $abort = true ]; then
+            cat >&2 << EOF
+    Aborting installation of zoneminder due to non-default symlinks in
+    /srv/http/zoneminder for the images and/or events directory, which could
+    result in loss of data. Please move your data in each of these directories to
+    /var/cache/zoneminder before installing zoneminder from the package.
+    EOF
+            exit 1
+        fi
+        exit 0
+    }
+
+    post_install() {
+        if [[ -d /var/log/zoneminder ]]; then
+            chmod 0755 /var/log/zoneminder
+            chown http.http /var/log/zoneminder
+        else
+            mkdir -m 0755 /var/log/zoneminder
+            chown http.http /var/log/zoneminder
+        fi
+        if [[ -d /tmp/zoneminder ]]; then
+            chmod 0700 /tmp/zoneminder
+            chown http.http /tmp/zoneminder
+        else
+            mkdir -m 0700 /tmp/zoneminder
+            chown http.http /tmp/zoneminder
+        fi
+        sed -i -e '
+        /^;extension=mysql.so/ s/^;//;
+        /^#extension=mysql.so/ s/^#//;
+        /^;extension=mysqli.so/ s/^;//;
+        /^#extension=mysqli.so/ s/^#//;
+        /^;extension=gd.so/ s/^;//;
+        /^#extension=gd.so/ s/^#//;
+        /^;extension=gettext.so/ s/^;//;
+        /^#extension=gettext.so/ s/^#//;
+        /^;extension=mcrypt.so/ s/^;//;
+        /^#extension=mcrypt.so/ s/^#//;
+        /^;extension=session.so/ s/^;//;
+        /^#extension=session.so/ s/^#//;
+        /^;extension=sockets.so/ s/^;//;
+        /^#extension=sockets.so/ s/^#//;
+        /^;extension=openssl.so/ s/^;//;
+        /^#extension=openssl.so/ s/^#//;
+        /^;extension=ftp.so/ s/^;//;
+        /^#extension=ftp.so/ s/^#//;
+        /^;extension=zip.so/ s/^;//;
+        /^#extension=zip.so/ s/^#//;
+        /^;open_basedir/ s/^;//;
+        /^#open_basedir/ s/^#//;
+        /^open_basedir/ s/:\/etc//;
+        /^open_basedir/ s/:\/etc\///;
+        /^open_basedir/ s/$/:\/etc/;
+        /^open_basedir/ s/:\/srv\/http\/zoneminder//;
+        /^open_basedir/ s/:\/srv\/http\/zoneminder\///;
+        /^open_basedir/ s/$/:\/srv\/http\/zoneminder/;
+        ' /etc/php/php.ini || read
+        sed -i -e '
+        /^LoadModule php5_module modules\/libphp5.so/d;
+        /^LoadModule rewrite_module modules\/mod_rewrite.so/ s/$/\nLoadModule php5_module modules\/libphp5.so/;
+        /^# PHP 5/d;
+        /^# ZoneMinder/d;
+        /^Include \/etc\/httpd\/conf\/extra\/php5_module.conf/d;
+        /^Include \/etc\/httpd\/conf\/extra\/httpd-zoneminder.conf/d;
+        /^Include conf\/extra\/httpd-default.conf/ s/$/\n\n# PHP 5\n\Include \/etc\/httpd\/conf\/extra\/php5_module.conf\n\n# ZoneMinder\nInclude \/etc\/httpd\/conf\/extra\/httpd-zoneminder.conf/;
+        ' /etc/httpd/conf/httpd.conf || read
+        cat << EOF
+    Note for mysql:
+    ==> To run Zoneminder, you must install the database running mysql service (as root):
+    ==> "rc.d start mysqld" (in initscripts) or "systemctl start mysqld.service" (in systemd)
+    ==> and add Zoneminder database typing (with passsword):
+    ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload"
+    ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p"
+    ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql"
+    ==> (or without passsword):
+    ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f reload"
+    ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf"
+    ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+
+    Note for php:
+    ==> You must uncomment that line in /etc/php/php.ini:
+    ==> "extension=mysql.so"
+    ==> check and make sure these are uncommented:
+    ==> "extension=gd.so"
+    ==> "extension=gettext.so"
+    ==> "extension=mcrypt.so"
+    ==> "extension=mysqli.so"
+    ==> "extension=session.so"
+    ==> "extension=sockets.so"
+    ==> "extension=openssl.so"
+    ==> "extension=ftp.so"
+    ==> "extension=zip.so"
+    ==> check and add to open_basedir "/etc" and
+    ==> "/srv/http/zoneminder" like so
+    ==> "open_basedir = /home:/tmp:/usr/share/pear:/etc:/srv/http/zoneminder"
+    ==> and set your timezone in php.ini:
+    ==> "date.timezone = <your_country>/<your_city>"
+
+    Note for apache:
+    ==> You must edit /etc/httpd/conf/httpd.conf and add the line:
+    ==> "LoadModule php5_module modules/libphp5.so"
+    ==> and:
+    ==> "Include /etc/httpd/conf/extra/php5_module.conf"
+    ==> "Include /etc/httpd/conf/extra/httpd-zoneminder.conf"
+    EOF
+    }
+
+    post_upgrade() {
+        post_install
+        /usr/bin/zmupdate.pl -f >/dev/null
+    }
+
+    post_remove() {
+        if [[ -d /tmp/zoneminder ]]; then
+            rm -vr /tmp/zoneminder
+        fi
+        sed -i -e '
+        /^open_basedir/ s/:\/srv\/http\/zoneminder//;
+        /^open_basedir/ s/:\/srv\/http\/zoneminder\///;
+        ' /etc/php/php.ini || read
+        sed -i -e '
+        /^# ZoneMinder/d;
+        /Include \/etc\/httpd\/conf\/extra\/httpd-zoneminder.conf/d;
+        ' /etc/httpd/conf/httpd.conf || read
+        cat << EOF
+    Note:
+    ==> To clean Zoneminder mysql database, run as root (with password):
+    ==> "echo 'delete from user where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql"
+    ==> "echo 'delete from db where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql"
+    ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f drop zm"
+    ==> (or without password):
+    ==> "echo 'delete from user where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+    ==> "echo 'delete from db where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+    ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f drop zm"
+
+    ==> Disable http with php if it isn't needed with others servers, 
+    ==> comment or remove that lines in /etc/httpd/conf/httpd.conf:
+    ==> "LoadModule php5_module modules/libphp5.so"
+    ==> "Include /etc/httpd/conf/extra/php5_module.conf"
+
+    ==> Remove line in /etc/httpd/conf/httpd.conf:
+    ==> "Include /etc/httpd/conf/extra/httpd-zoneminder.conf"
+
+    ==> Disable php with mysql if it isn't needed with others servers, 
+    ==> comment that lines in /etc/php/php.ini:
+    ==> "extension=mysql.so"
+    ==> "extension=gd.so"
+    ==> "extension=gettext.so"
+    ==> "extension=mcrypt.so"
+    ==> "extension=mysqli.so"
+    ==> "extension=session.so"
+    ==> "extension=sockets.so"
+    ==> "date.timezone = <my_country>/<my_city>"
+
+    ==> Edit /etc/php/php.ini and remove "/etc" and "/srv/http/zoneminder"
+    ==> in the "open_basedir".
+
+    ==> Remove log files and "zonemider" directory in "/var/log/zoneminder".
+
+    ==> Backup and remove "events", "images" and "temp" dirs in "/var/cache/zoneminder".
+    EOF
+    }
+  #+END_SRC
+* BUILD
+  #+NAME: BUILD
+  #+BEGIN_SRC sh
+    build() {
+        cd $srcdir/ZoneMinder-$pkgver
+        ./bootstrap.sh
+
+        export CXXFLAGS=-D__STDC_CONSTANT_MACROS
+        ./configure --prefix=/usr \
+            --enable-crashtrace=no \
+            --enable-debug=no \
+            --enable-mmap=yes \
+            --sysconfdir=/etc \
+            --with-cgidir=/srv/http/cgi-bin \
+            --with-extralibs='-L/usr/lib -L/usr/lib/mysql' \
+            --with-libarch=lib \
+            --with-ffmpeg=/usr \
+            --with-mysql=/usr \
+            --with-webdir=/srv/http/$pkgbase \
+            --with-webgroup=http \
+            --with-webhost=localhost \
+            --with-webuser=http \
+            
+        make V=0
+    }
+  #+END_SRC
+  
+* PACKAGE
+  #+NAME: BUILD
+  #+BEGIN_SRC sh
+    package() {
+        cd $srcdir/ZoneMinder-$pkgver
+
+        make DESTDIR=$pkgdir install
+
+        mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
+        mkdir -p $pkgdir/srv/zoneminder/socks
+        chown -R http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
+        chown -R http.http $pkgdir/srv/zoneminder/socks
+        chmod 0700 $pkgdir/etc/zm.conf
+
+        for i in events images temp; do
+            mv    $pkgdir/srv/http/$pkgbase/$i $pkgdir/var/cache/$pkgbase/$i
+            ln -s /var/cache/$pkgbase/$i       $pkgdir/srv/http/$pkgbase/$i
+            chown -h http.http                 $pkgdir/srv/http/$pkgbase/$i
+        done
+
+        ln -s /srv/http/cgi-bin                  $pkgdir/srv/http/$pkgbase
+        chown -h http.http                       $pkgdir/srv/http/{cgi-bin,$pkgbase,$pkgbase/cgi-bin}
+
+        ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgbase
+        
+        install -D -m 644 $srcdir/httpd-$pkgbase.conf $pkgdir/etc/httpd/conf/extra
+        install -D -m 644 $srcdir/$pkgbase            $pkgdir/etc/rc.d
+        install -D -m 644 $srcdir/$pkgbase.service    $pkgdir/usr/lib/systemd/system
+        install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
+        install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
+    }
+  #+END_SRC
+* PKGBUILD
+  #+BEGIN_SRC sh :tangle zoneminder/PKGBUILD :noweb yes
+    <<CONTRIBUTORS>>
+    # based of debian squeeze package
+
+    <<PACKAGE_VERSION_DATA>>
+
+    backup=( etc/zm.conf )
+    url="https://github.com/ZoneMinder/ZoneMinder/archive/"
+    license=( GPL )
+
+    <<DEPENDENCIES>>
+
+    install=$pkgbase.install
+
+    <<SOURCES>>
+
+    <<BUILD>>
+  #+END_SRC
+* PKGBUILD  2014-09-03
+  # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
+# Contributor: Jacek Burghardt           <jacek@hebe.us>
+# Contributor: Vojtech Aschenbrenner     <v@asch.cz>
+# Contributor: Jason Gardner             <buhrietoe@gmail.com>
+# Contributor: Ross melin                <rdmelin@gmail.com>
+# Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
+# Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+
+# based of debian squeeze package
+
+pkgbase=zoneminder
+pkgname=zoneminder
+pkgver=1.27.0
+pkgrel=1
+pkgdesc='Capture, analyse, record and monitor video security cameras'
+arch=(
+  i686
+  x86_64
+  mips64el
+  arm
+)
+backup=(
+  etc/zm.conf
+)
+url="https://github.com/ZoneMinder/ZoneMinder/archive/"
+license=(
+  GPL
+)
+depends=(
+  apache
+  cambozola
+  gnutls
+  mariadb
+  perl-archive-zip
+  perl-date-manip
+  perl-dbd-mysql
+  perl-dbi
+  perl-expect
+  perl-libwww
+  perl-mime-lite
+  perl-mime-tools
+  perl-php-serialization
+  perl-net-sftp-foreign
+  perl-sys-mmap
+  perl-time-modules
+  perl-x10
+  php
+  php-apache
+  php-gd
+  php-mcrypt
+)
+makedepends=(
+  netpbm
+)
+optdepends=(
+  netpbm
+)
+install=$pkgbase.install
+source=(
+  https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+  httpd-$pkgbase.conf
+  $pkgbase
+  $pkgbase.service
+)
+sha512sums=(
+  8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14
+  fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36
+  ab4e1d5ddaf4d9cd53d6ca59d7965902afd6a2dc830fbbafa270736c52c2b3563075fee860bb0276466f96e9dbfb71b259ac45a4ae2e4ead8eaec154a0159eb0
+  cfb0eb87a989236c72741a496ddc6a73aa2696e5beaaca4836d3c231ddb24c7ef5e9f65e7afa49674f2115cbfa4a07c75486e1947ce294c816ddbb875f3b99cf
+)
+build() {
+  cd $srcdir/ZoneMinder-$pkgver
+  ./bootstrap.sh
+
+
+export CXXFLAGS=-D__STDC_CONSTANT_MACROS
+./configure --prefix=/usr\
+    --enable-crashtrace=no\
+    --enable-debug=no\
+    --enable-mmap=yes\
+    --sysconfdir=/etc\
+    --with-cgidir=/srv/http/cgi-bin\
+    --with-extralibs='-L/usr/lib -L/usr/lib/mysql'\
+    --with-libarch=lib\
+    --with-ffmpeg=/usr \
+    --with-mysql=/usr\
+    --with-webdir=/srv/http/$pkgbase\
+    --with-webgroup=http\
+    --with-webhost=localhost\
+    --with-webuser=http \
+
+  make V=0
+}
+
+package() {
+  cd $srcdir/ZoneMinder-$pkgver
+
+  make DESTDIR=$pkgdir install
+
+  mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
+  mkdir -p $pkgdir/srv/zoneminder/socks
+  chown -R http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
+  chown -R http.http $pkgdir/srv/zoneminder/socks
+  chmod 0700 $pkgdir/etc/zm.conf
+
+  for i in events images temp; do
+    mv    $pkgdir/srv/http/$pkgbase/$i $pkgdir/var/cache/$pkgbase/$i
+    ln -s /var/cache/$pkgbase/$i       $pkgdir/srv/http/$pkgbase/$i
+    chown -h http.http                 $pkgdir/srv/http/$pkgbase/$i
+  done
+
+  ln -s /srv/http/cgi-bin                  $pkgdir/srv/http/$pkgbase
+  chown -h http.http                       $pkgdir/srv/http/{cgi-bin,$pkgbase,$pkgbase/cgi-bin}
+
+  ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgbase
+
+  install -D -m 644 $srcdir/httpd-$pkgbase.conf $pkgdir/etc/httpd/conf/extra
+  install -D -m 644 $srcdir/$pkgbase            $pkgdir/etc/rc.d
+  install -D -m 644 $srcdir/$pkgbase.service    $pkgdir/usr/lib/systemd/system
+  install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
+  install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
+}
+
+* PRIMARY DOCUMENTATION
+* LOG
+** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
+   1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
+* Step by step
+  1. [ ] cd zoneminder && makepkg --syncdeps
+  2. [ ] pacman --upgrade
+  3. [ ] Mysql (see zoneminder.install)
+     1. [ ] Start mysql server
+     2. [ ] add Zoneminder database
+	1. [ ] typing (with passsword):
+	   #+BEGIN_SRC sh
+             mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
+             cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
+             echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql
+	   #+END_SRC
+     ==> (or without passsword):
+     ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f reload"
+     ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf"
+     ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+  4. [ ] sudo systemctl start zoneminder
+     1. [ ] DEBUG: sudo systemctl status zoneminder.service
+	● zoneminder.service - Capture, analyse, record and monitor video security cameras
+	Loaded: loaded (/usr/lib/systemd/system/zoneminder.service; disabled)
+	Active: failed (Result: exit-code) since Wed 2014-09-03 18:15:50 PDT; 47s ago
+	Process: 21636 ExecStart=/usr/bin/zmpkg.pl start (code=exited, status=255)
+	Sep 03 18:15:49 kangaroo systemd[1]: [/usr/lib/systemd/system/zoneminder.service:10] Unknown lvalue 'ExecRestart' in section 'Service'
+	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: DBI connect('database=zm;host=localhost','zmuser',...) failed: Access denied for user 'zmuser'@'localhost' (using password: ...pm line 91.
+	Sep 03 18:15:50 kangaroo systemd[1]: zoneminder.service: control process exited, code=exited status=255
+	Sep 03 18:15:50 kangaroo systemd[1]: Failed to start Capture, analyse, record and monitor video security cameras.
+	Sep 03 18:15:50 kangaroo systemd[1]: Unit zoneminder.service entered failed state.
+	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: Can't connect to db at /usr/share/perl5/site_perl/ZoneMinder/Config.pm line 100.
+	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/share/perl5/site_perl/ZoneMinder/Config.pm line 100.
+	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: Compilation failed in require at /usr/share/perl5/site_perl/ZoneMinder.pm line 33.
+	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/share/perl5/site_perl/ZoneMinder.pm line 33.
+	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: Compilation failed in require at /usr/bin/zmpkg.pl line 37.
+	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/bin/zmpkg.pl line 37.
+	Hint: Some lines were ellipsized, use -l to show in full.
+  5. [ ] sudo systemctl enable zoneminder
+  6. [ ] 
+* TDW
+  1. makepkg --geninteg
