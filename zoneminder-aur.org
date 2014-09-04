@@ -658,9 +658,40 @@ package() {
   
 * TODO TESTING
 ** 2014-09-03
-   1. [ ] Install base Arch Linux
-   2. [ ] Step by step
-   3. [ ] Document apache configuration files
+   1. [X] Install base Arch Linux
+   2. [-] Step by step
+      1. [X] Apache
+	 1. [X] pacman --sync apache
+	 2. [X] Document apache configuration files
+	    1. [X] file:/etc/httpd/conf/httpd.conf
+	       #+BEGIN_SRC sh
+		 cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.original
+               #+END_SRC
+	 3. [X] httpd service
+	    #+BEGIN_SRC sh
+              systemctl start httpd
+              systemctl enable httpd
+	    #+END_SRC
+      2. [-] Install PHP
+	 1. [X] Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
+	 2. [X] php php-apache
+	    #+BEGIN_SRC sh
+              pacman --sync php php-apache
+	    #+END_SRC
+         3. [ ] add these lines to file:/etc/httpd/conf/httpd.conf:
+	    1. [ ] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+	       #+BEGIN_SRC conf
+	         LoadModule php5_module modules/libphp5.so
+	       #+END_SRC
+	    2. [ ] Place this at the end of the Include list:
+	       #+BEGIN_SRC conf
+	         Include conf/extra/php5_module.conf
+	       #+END_SRC
+	 4. [ ] Test file:/srv/http/index.php
+	    #+BEGIN_SRC sh
+	      <?php phpinfo(); ?>
+	    #+END_SRC
+	    1. [ ] http://localhost/test.php
 * TODO OTHER DISTROS
    
 * TDW
