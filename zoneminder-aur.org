@@ -108,9 +108,9 @@
                 '7ab671aebf821fa97affc490f101af84b934cef1f7c905d5779bb3bb94ee8cc25c1ec6be63b4aee662ba3e92c2e9044432e0c580640849a1eb3d7fca06a35dd2'
                 'd04aede00d2f008e7851f69a62633f27d4f747b6fa4350e3096415cc7c2659d677707af3e397295010fa05794ff9cbb995c3904e6989ebfbd58ba6b4bfcc002c')
   #+END_SRC
-** httpd-zoneminder.conf
+** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
   #+NAME: httpd-zoneminder.conf
-  #+BEGIN_SRC conf :tangle zoneminder/httpd-zoneminder.conf
+  #+BEGIN_SRC conf :tangle zoneminder/httpd-zoneminder.conf :padline no
     # /etc/httpd/conf/extra/httpd-zm.conf
     # Config for zoneminder web app
 
@@ -637,6 +637,26 @@ package() {
 	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/bin/zmpkg.pl line 37.
 	Hint: Some lines were ellipsized, use -l to show in full.
   5. [ ] sudo systemctl enable zoneminder
-  6. [ ] 
+  6. [ ] PHP See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
+     1. [ ] PHP - mod_mpm_prefork file:/etc/httpd/conf/httpd.conf See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
+	To use mod_mpm_prefork, open /etc/httpd/conf/httpd.conf and replace
+	LoadModule mpm_event_module modules/mod_mpm_event.so
+	with LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+     2. [ ] file:/etc/httpd/conf/httpd.conf
+     3. [ ] PHP file:/etc/httpd/conf/extra/httpd-zoneminder.conf
+	  php_value short_open_tag On
+     4. [ ] PHP file:/etc/httpd/conf/httpd.conf
+	Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+	LoadModule php5_module modules/libphp5.so
+     5. [ ] You don't have permission to access the requested directory. There is either no index document or the directory is read-protected.
+     6. [ ] TEST PHP
+	1. [ ] file:/srv/http/test.php
+           <?php phpinfo(); ?>
+	2. [ ] http://localhost/test.php
+     7. [ ] file:/etc/php/php.ini
+	
+* DEBUGGING
+  
+* TESTING  
 * TDW
   1. makepkg --geninteg
