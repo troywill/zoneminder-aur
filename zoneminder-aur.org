@@ -495,6 +495,103 @@
 
     <<BUILD>>
   #+END_SRC
+
+* PRIMARY DOCUMENTATION
+* LOG
+** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
+   1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
+* Step by step
+  1. [X] Install dependencies
+     1. [X] Build AUR depencencies
+  2. [-] Build zoneminder package
+  3. [-] Copy config files
+     #+BEGIN_SRC sh :tangle bin/make.pre.zoneminder.install.backups :shebang #!/bin/bash
+       set -o errexit
+       set -o verbose
+       cd ../config
+       cp -i /etc/php/php.ini php.ini.pre.zoneminder.install
+       cp -i /etc/httpd/conf/httpd.conf httpd.conf.pre.zoneminder.install
+   #+END_SRC
+  4. [-] Configure /etc/httpd/conf/httpd.conf for PHP
+     1. [X] Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
+     2. [X] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
+	 #+BEGIN_SRC conf
+           LoadModule mpm_event_module modules/mod_mpm_event.so
+	 #+END_SRC
+	 with
+	 #+BEGIN_SRC conf
+           LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+	 #+END_SRC
+     3. [-] add these lines to file:/etc/httpd/conf/httpd.conf:
+	1. [X] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+	   #+BEGIN_SRC conf
+	     LoadModule php5_module modules/libphp5.so
+	   #+END_SRC
+	2. [ ] Place this at the end of the Include list:
+	   #+BEGIN_SRC conf
+	     Include conf/extra/php5_module.conf
+	   #+END_SRC
+     4. [ ] Test file:/srv/http/index.php
+	 #+BEGIN_SRC sh
+	   <?php phpinfo(); ?>
+	 #+END_SRC
+	1. [ ] http://localhost/test.php
+  5. [X] cd zoneminder && makepkg --syncdeps
+     1. [X] pacman --upgrade zoneminder
+	1. [X] Make copy of /etc/php/php.ini
+	   #+BEGIN_SRC sh
+	     cp /etc/php/php.ini php.ini.post.zoneminder.install
+	   #+END_SRC
+	2. [X] Make copy of /etc/httpd/conf/httpd.conf
+	   #+BEGIN_SRC sh
+	     cp /etc/httpd/conf/httpd.conf httpd.conf.post.zoneminder.install
+	   #+END_SRC
+  6. [X] Mysql (see zoneminder.install)
+     1. [X] Start httpd server
+	#+BEGIN_SRC sh
+	  systemctl restart httpd
+	#+END_SRC
+     2. [X] Start mysql server
+	#+BEGIN_SRC sh
+          systemctl restart mysqld
+	#+END_SRC
+     3. [X] add Zoneminder database
+	1. [X] typing (with passsword):
+	   #+BEGIN_SRC sh :tangle /tmp/add-zoneminder-database.sh
+	     mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
+	     cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
+	     echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql
+	   #+END_SRC
+       ==> (or without passsword):
+       ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f reload"
+       ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf"
+       ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+  7. [X] sudo systemctl start zoneminder
+  8. [ ] sudo systemctl enable zoneminder
+     1. [ ] PHP See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
+	1. [ ] PHP - mod_mpm_prefork file:/etc/httpd/conf/httpd.conf See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
+	   To use mod_mpm_prefork, open /etc/httpd/conf/httpd.conf and replace
+	   LoadModule mpm_event_module modules/mod_mpm_event.so
+	   with LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+	2. [ ] file:/etc/httpd/conf/httpd.conf
+	3. [ ] PHP file:/etc/httpd/conf/extra/httpd-zoneminder.conf
+	     php_value short_open_tag On
+	4. [ ] PHP file:/etc/httpd/conf/httpd.conf
+	   Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+	   LoadModule php5_module modules/libphp5.so
+	5. [ ] You don't have permission to access the requested directory. There is either no index document or the directory is read-protected.
+	6. [ ] TEST PHP
+	   1. [ ] file:/srv/http/test.php
+              <?php phpinfo(); ?>
+	   2. [ ] http://localhost/test.php
+	7. [ ] file:/etc/php/php.ini
+* DEBUGGING
+* TODO TESTING
+** 2014-09-03
+* TODO OTHER DISTROS
+* TDW
+  1. makepkg --geninteg >> PKGBUILD
+  2. makepkg --syncdeps
 * PKGBUILD  2014-09-03
   # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
 # Contributor: Jacek Burghardt           <jacek@hebe.us>
@@ -618,164 +715,3 @@ package() {
   install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
   install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
 }
-
-* PRIMARY DOCUMENTATION
-* LOG
-** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
-   1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
-* Step by step
-  1. [-] Install dependencies
-     1. [X] Build AUR depencencies
-     2. [ ] Build zoneminder packages
-     3. [ ] Copy config files
-	#+BEGIN_SRC sh :tangle bin/make.pre.zoneminder.install.backups :shebang #!/bin/bash
-          set -o errexit
-          set -o verbose
-          cd ../config
-          cp -i /etc/php/php.ini php.ini.pre.zoneminder.install
-          cp -i /etc/httpd/conf/httpd.conf httpd.conf.pre.zoneminder.install
-      #+END_SRC
-     4. [-] Install php
-	1. [X] Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
-	4. [X] Make copy of /etc/httpd/conf/httpd.conf
-	   #+BEGIN_SRC sh
-	   #+END_SRC
-        5. [X] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
-	    #+BEGIN_SRC conf
-              LoadModule mpm_event_module modules/mod_mpm_event.so
-	    #+END_SRC
-	    with
-	    #+BEGIN_SRC conf
-              LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
-	    #+END_SRC
-        6. [-] add these lines to file:/etc/httpd/conf/httpd.conf:
-	   1. [X] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
-	      #+BEGIN_SRC conf
-	        LoadModule php5_module modules/libphp5.so
-	      #+END_SRC
-	   2. [ ] Place this at the end of the Include list:
-	      #+BEGIN_SRC conf
-	        Include conf/extra/php5_module.conf
-	      #+END_SRC
-	7. [ ] Test file:/srv/http/index.php
-	    #+BEGIN_SRC sh
-	      <?php phpinfo(); ?>
-	    #+END_SRC
-	   1. [ ] http://localhost/test.php
-  2. [X] cd zoneminder && makepkg --syncdeps
-  3. [X] pacman --upgrade zoneminder
-     1. [X] Make copy of /etc/php/php.ini
-	#+BEGIN_SRC sh
-	  cp /etc/php/php.ini php.ini.post.zoneminder.install
-	#+END_SRC
-     2. [X] Make copy of /etc/httpd/conf/httpd.conf
-	#+BEGIN_SRC sh
-	  cp /etc/httpd/conf/httpd.conf httpd.conf.post.zoneminder.install
-	#+END_SRC
-  4. [X] Mysql (see zoneminder.install)
-     1. [X] Start httpd server
-	#+BEGIN_SRC sh
-          systemctl restart httpd
-	#+END_SRC
-     2. [X] Start mysql server
-	#+BEGIN_SRC sh
-          systemctl restart mysqld
-	#+END_SRC
-     3. [X] add Zoneminder database
-	1. [X] typing (with passsword):
-	   #+BEGIN_SRC sh :tangle /tmp/add-zoneminder-database.sh
-             mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
-             cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
-             echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql
-	   #+END_SRC
-     ==> (or without passsword):
-     ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f reload"
-     ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf"
-     ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
-  5. [X] sudo systemctl start zoneminder
-     1. [X] DEBUG: sudo systemctl status zoneminder.service
-	● zoneminder.service - Capture, analyse, record and monitor video security cameras
-	Loaded: loaded (/usr/lib/systemd/system/zoneminder.service; disabled)
-	Active: failed (Result: exit-code) since Wed 2014-09-03 18:15:50 PDT; 47s ago
-	Process: 21636 ExecStart=/usr/bin/zmpkg.pl start (code=exited, status=255)
-	Sep 03 18:15:49 kangaroo systemd[1]: [/usr/lib/systemd/system/zoneminder.service:10] Unknown lvalue 'ExecRestart' in section 'Service'
-	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: DBI connect('database=zm;host=localhost','zmuser',...) failed: Access denied for user 'zmuser'@'localhost' (using password: ...pm line 91.
-	Sep 03 18:15:50 kangaroo systemd[1]: zoneminder.service: control process exited, code=exited status=255
-	Sep 03 18:15:50 kangaroo systemd[1]: Failed to start Capture, analyse, record and monitor video security cameras.
-	Sep 03 18:15:50 kangaroo systemd[1]: Unit zoneminder.service entered failed state.
-	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: Can't connect to db at /usr/share/perl5/site_perl/ZoneMinder/Config.pm line 100.
-	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/share/perl5/site_perl/ZoneMinder/Config.pm line 100.
-	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: Compilation failed in require at /usr/share/perl5/site_perl/ZoneMinder.pm line 33.
-	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/share/perl5/site_perl/ZoneMinder.pm line 33.
-	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: Compilation failed in require at /usr/bin/zmpkg.pl line 37.
-	Sep 03 18:15:50 kangaroo zmpkg.pl[21636]: BEGIN failed--compilation aborted at /usr/bin/zmpkg.pl line 37.
-	Hint: Some lines were ellipsized, use -l to show in full.
-  6. [X] sudo systemctl enable zoneminder
-  7. [ ] PHP See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
-     1. [ ] PHP - mod_mpm_prefork file:/etc/httpd/conf/httpd.conf See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
-	To use mod_mpm_prefork, open /etc/httpd/conf/httpd.conf and replace
-	LoadModule mpm_event_module modules/mod_mpm_event.so
-	with LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
-     2. [ ] file:/etc/httpd/conf/httpd.conf
-     3. [ ] PHP file:/etc/httpd/conf/extra/httpd-zoneminder.conf
-	  php_value short_open_tag On
-     4. [ ] PHP file:/etc/httpd/conf/httpd.conf
-	Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
-	LoadModule php5_module modules/libphp5.so
-     5. [ ] You don't have permission to access the requested directory. There is either no index document or the directory is read-protected.
-     6. [ ] TEST PHP
-	1. [ ] file:/srv/http/test.php
-           <?php phpinfo(); ?>
-	2. [ ] http://localhost/test.php
-     7. [ ] file:/etc/php/php.ini
-* DEBUGGING
-  
-* TODO TESTING
-** 2014-09-03
-   1. [X] Install base Arch Linux
-   2. [-] Step by step
-      1. [X] Apache
-	 1. [X] pacman --sync apache
-	 2. [X] Document apache configuration files
-	    1. [X] file:/etc/httpd/conf/httpd.conf
-	       #+BEGIN_SRC sh
-		 cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.original
-               #+END_SRC
-	 3. [X] httpd service
-	    #+BEGIN_SRC sh
-              systemctl start httpd
-              systemctl enable httpd
-	    #+END_SRC
-      2. [-] Install PHP
-	 1. [X] Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
-	 2. [X] php php-apache
-	    #+BEGIN_SRC sh
-              pacman --sync php php-apache
-	    #+END_SRC
-         3. [ ] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
-	    #+BEGIN_SRC conf
-              LoadModule mpm_event_module modules/mod_mpm_event.so
-	    #+END_SRC
-	    with
-	    #+BEGIN_SRC conf
-              LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
-	    #+END_SRC
-         3. [X] add these lines to file:/etc/httpd/conf/httpd.conf:
-	    1. [X] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
-	       #+BEGIN_SRC conf
-	         LoadModule php5_module modules/libphp5.so
-	       #+END_SRC
-	    2. [X] Place this at the end of the Include list:
-	       #+BEGIN_SRC conf
-	         Include conf/extra/php5_module.conf
-	       #+END_SRC
-	 4. [ ] Test file:/srv/http/index.php
-	    #+BEGIN_SRC sh
-	      <?php phpinfo(); ?>
-	    #+END_SRC
-	    1. [ ] http://localhost/test.php
-* TODO OTHER DISTROS
-   
-* TDW
-  1. makepkg --geninteg >> PKGBUILD
-  2. makepkg --syncdeps
