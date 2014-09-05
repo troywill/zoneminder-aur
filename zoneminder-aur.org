@@ -2,6 +2,7 @@
 * CONTRIBUTORS
   #+NAME: CONTRIBUTORS
   #+BEGIN_SRC sh
+    # Contributor: Troy Will                 <troydwill@gmail.com>
     # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
     # Contributor: Jacek Burghardt           <jacek@hebe.us>
     # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
@@ -16,7 +17,7 @@
     pkgbase=zoneminder
     pkgname=zoneminder
     pkgver=1.27.0
-    pkgrel=1
+    pkgrel=2
     pkgdesc='Capture, analyse, record and monitor video security cameras'
     arch=( i686 x86_64 mips64el arm )
   #+END_SRC
@@ -589,6 +590,7 @@
 * TDW
   1. makepkg --geninteg >> PKGBUILD
   2. makepkg --syncdeps
+* https://wiki.archlinux.org/index.php/Arch_User_Repository
 * PKGBUILD  2014-09-03
   # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
 # Contributor: Jacek Burghardt           <jacek@hebe.us>
