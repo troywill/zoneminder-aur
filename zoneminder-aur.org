@@ -94,11 +94,12 @@
     # script to download Zoneminder dependency build tarballs from AUR
     set -o errexit
     cd ../aur
-    wget https://aur.archlinux.org/packages/pe/perl-sys-mmap/perl-sys-mmap.tar.gz
     wget https://aur.archlinux.org/packages/ca/cambozola/cambozola.tar.gz
+    wget https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
     wget https://aur.archlinux.org/packages/pe/perl-expect/perl-expect.tar.gz
-    wget https://aur.archlinux.org/packages/pe/perl-php-serialization/perl-php-serialization.tar.gz
     wget https://aur.archlinux.org/packages/pe/perl-net-sftp-foreign/perl-net-sftp-foreign.tar.gz
+    wget https://aur.archlinux.org/packages/pe/perl-php-serialization/perl-php-serialization.tar.gz
+    wget https://aur.archlinux.org/packages/pe/perl-sys-mmap/perl-sys-mmap.tar.gz
     wget https://aur.archlinux.org/packages/pe/perl-x10/perl-x10.tar.gz
   #+END_SRC
 * SOURCES
@@ -624,20 +625,20 @@ package() {
    1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
 * Step by step
   1. [-] Install dependencies
-     1. [X] Build and install [[https://aur.archlinux.org/packages/perl-sys-mmap/][perl-sys-mmap/]]
-     2. [-] Install php
+     1. [X] Build AUR depencencies
+     2. [ ] Build zoneminder packages
+     3. [ ] Copy config files
+	#+BEGIN_SRC sh :tangle bin/make.pre.zoneminder.install.backups :shebang #!/bin/bash
+          set -o errexit
+          set -o verbose
+          cd ../config
+          cp -i /etc/php/php.ini php.ini.pre.zoneminder.install
+          cp -i /etc/httpd/conf/httpd.conf httpd.conf.pre.zoneminder.install
+      #+END_SRC
+     4. [-] Install php
 	1. [X] Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
-        2. [X] Install php php-apache
-	   #+BEGIN_SRC sh
-             pacman --sync php php-apache
-	   #+END_SRC
-	3. [X] Make copy of /etc/php/php.ini
-	   #+BEGIN_SRC sh
-	     cp /etc/php/php.ini php.ini.pre.zoneminder.install
-	   #+END_SRC
 	4. [X] Make copy of /etc/httpd/conf/httpd.conf
 	   #+BEGIN_SRC sh
-	     cp /etc/httpd/conf/http.conf httpd.conf.pre.zoneminder.install
 	   #+END_SRC
         5. [X] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
 	    #+BEGIN_SRC conf
