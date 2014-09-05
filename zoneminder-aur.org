@@ -568,23 +568,20 @@
        ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
   7. [X] sudo systemctl start zoneminder
   8. [ ] sudo systemctl enable zoneminder
-     1. [ ] PHP See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
-	1. [ ] PHP - mod_mpm_prefork file:/etc/httpd/conf/httpd.conf See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
-	   To use mod_mpm_prefork, open /etc/httpd/conf/httpd.conf and replace
-	   LoadModule mpm_event_module modules/mod_mpm_event.so
-	   with LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
-	2. [ ] file:/etc/httpd/conf/httpd.conf
-	3. [ ] PHP file:/etc/httpd/conf/extra/httpd-zoneminder.conf
-	     php_value short_open_tag On
-	4. [ ] PHP file:/etc/httpd/conf/httpd.conf
-	   Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
-	   LoadModule php5_module modules/libphp5.so
-	5. [ ] You don't have permission to access the requested directory. There is either no index document or the directory is read-protected.
-	6. [ ] TEST PHP
-	   1. [ ] file:/srv/http/test.php
-              <?php phpinfo(); ?>
-	   2. [ ] http://localhost/test.php
-	7. [ ] file:/etc/php/php.ini
+  9. [ ] PHP in httpd.conf See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
+     1. [ ] PHP - mod_mpm_prefork file:/etc/httpd/conf/httpd.conf See https://wiki.archlinux.org/index.php/Apache_HTTP_Server
+	To use mod_mpm_prefork, open /etc/httpd/conf/httpd.conf and replace
+	LoadModule mpm_event_module modules/mod_mpm_event.so
+	with LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+     4. [ ] PHP file:/etc/httpd/conf/httpd.conf
+	Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+	LoadModule php5_module modules/libphp5.so
+* UTILITIES
+  #+BEGIN_SRC sh :tangle bin/mysql-setup.sh :shebang #!/usr/bin/bash
+    mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
+    cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
+    echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/
+  #+END_SRC
 * DEBUGGING
 * TODO TESTING
 ** 2014-09-03
