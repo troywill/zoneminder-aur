@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -o errexit
+set -o verbose
+cd ../config
+cp -i /etc/php/php.ini php.ini.post.zoneminder.install
+cp -i /etc/httpd/conf/httpd.conf httpd.conf.post.zoneminder.install
