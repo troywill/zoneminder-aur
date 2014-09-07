@@ -578,6 +578,7 @@
   1. makepkg --geninteg >> PKGBUILD
   2. makepkg --syncdeps
 * https://wiki.archlinux.org/index.php/Arch_User_Repository
+* https://aur.archlinux.org/packages/zoneminder/
 * PKGBUILD  2014-09-03
   # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
 # Contributor: Jacek Burghardt           <jacek@hebe.us>
