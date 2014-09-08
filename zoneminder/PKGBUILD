@@ -1,4 +1,5 @@
 
+# Contributor: Troy Will                 <troydwill@gmail.com>
 # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
 # Contributor: Jacek Burghardt           <jacek@hebe.us>
 # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
@@ -6,12 +7,12 @@
 # Contributor: Ross melin                <rdmelin@gmail.com>
 # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
 # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
-# based of debian squeeze package
+# orginally based on debian squeeze package
 
 pkgbase=zoneminder
 pkgname=zoneminder
 pkgver=1.27.0
-pkgrel=1
+pkgrel=2
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm )
 
@@ -87,6 +88,7 @@ build() {
         
     make V=0
 }
+
 package() {
     cd $srcdir/ZoneMinder-$pkgver
 
