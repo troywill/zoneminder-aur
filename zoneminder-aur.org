@@ -496,7 +496,6 @@
 
     <<BUILD>>
   #+END_SRC
-
 * PRIMARY DOCUMENTATION
 * LOG
 ** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
@@ -513,7 +512,19 @@
        cp -i /etc/php/php.ini php.ini.pre.zoneminder.install
        cp -i /etc/httpd/conf/httpd.conf httpd.conf.pre.zoneminder.install
    #+END_SRC
-  4. [ ] Configure /etc/httpd/conf/httpd.conf for PHP
+  4. [ ] Install zoneminder
+     #+BEGIN_SRC sh
+       pacman --upgrade zoneminder     
+     #+END_SRC
+  5. [ ] Copy config files
+     #+BEGIN_SRC sh :tangle bin/make.post.zoneminder.install.backups :shebang #!/bin/bash
+       set -o errexit
+       set -o verbose
+       cd ../config
+       cp -i /etc/php/php.ini php.ini.post.zoneminder.install
+       cp -i /etc/httpd/conf/httpd.conf httpd.conf.post.zoneminder.install
+     #+END_SRC
+  6. [ ] Configure /etc/httpd/conf/httpd.conf for PHP
      1. [ ] Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
      2. [ ] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
 	 #+BEGIN_SRC conf
@@ -525,24 +536,15 @@
 	 #+END_SRC
      3. [ ] add these lines to file:/etc/httpd/conf/httpd.conf:
 	1. [ ] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+            (Note: zoneminder.install attemps to do this but fails)
 	   #+BEGIN_SRC conf
 	     LoadModule php5_module modules/libphp5.so
 	   #+END_SRC
-	2. [ ] Place this at the end of the Include list:
+	2. [ ] Place this at the end of the Include list: (Note: zoneminder.install did this)
 	   #+BEGIN_SRC conf
 	     Include conf/extra/php5_module.conf
 	   #+END_SRC
-  5. [ ] Install zoneminder
-     1. [ ] pacman --upgrade zoneminder
-     2. [ ] Copy config files
-	#+BEGIN_SRC sh :tangle bin/make.post.zoneminder.install.backups :shebang #!/bin/bash
-          set -o errexit
-          set -o verbose
-          cd ../config
-          cp -i /etc/php/php.ini php.ini.post.zoneminder.install
-          cp -i /etc/httpd/conf/httpd.conf httpd.conf.post.zoneminder.install
-        #+END_SRC
-  6. [ ] Mysql (see zoneminder.install)
+  7. [ ] Mysql (see zoneminder.install)
      1. [ ] Start httpd server
 	#+BEGIN_SRC sh
 	  systemctl restart httpd
@@ -553,23 +555,17 @@
 	#+END_SRC
      3. [ ] add Zoneminder database
 	1. [ ] typing (with passsword):
-	   #+BEGIN_SRC sh :tangle /tmp/add-zoneminder-database.sh
-	     mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
-	     cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
-	     echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql
+	   #+BEGIN_SRC  :tangle bin/mysql-setup.sh :shebang #!/usr/bin/bash
+             mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
+             cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
+             echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
+             
+             
+             cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
+             echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql
 	   #+END_SRC
-       ==> (or without passsword):
-       ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f reload"
-       ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf"
-       ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
-  7. [ ] sudo systemctl start zoneminder
-  8. [ ] sudo systemctl enable zoneminder
-* UTILITIES
-  #+BEGIN_SRC sh :tangle bin/mysql-setup.sh :shebang #!/usr/bin/bash
-    mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
-    cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
-    echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/
-  #+END_SRC
+  8. [ ] sudo systemctl start zoneminder
+  9. [ ] sudo systemctl enable zoneminder
 * DEBUGGING
 * TODO TESTING
 ** 2014-09-03
