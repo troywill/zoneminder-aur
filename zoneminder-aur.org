@@ -1,7 +1,18 @@
 * Introduction
 * Step by step
-  1. [ ] Install dependencies
-     1. [ ] Build AUR depencencies
+  1. [ ] Install AUR dependencies
+     Here's a helper script to download the PKGBUILDS from the AUR:
+     #+BEGIN_SRC sh :tangle bin/download-aur-tarballs.sh :shebang #!/bin/bash
+       # script to download Zoneminder dependency build tarballs from AUR
+       mkdir --parent aur && cd aur
+       wget https://aur.archlinux.org/packages/ca/cambozola/cambozola.tar.gz
+       wget https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
+       wget https://aur.archlinux.org/packages/pe/perl-expect/perl-expect.tar.gz
+       wget https://aur.archlinux.org/packages/pe/perl-net-sftp-foreign/perl-net-sftp-foreign.tar.gz
+       wget https://aur.archlinux.org/packages/pe/perl-php-serialization/perl-php-serialization.tar.gz
+       wget https://aur.archlinux.org/packages/pe/perl-sys-mmap/perl-sys-mmap.tar.gz
+       wget https://aur.archlinux.org/packages/pe/perl-x10/perl-x10.tar.gz
+     #+END_SRC
   2. [ ] Build zoneminder package but don't install it
      #+BEGIN_SRC sh
        cp -a zoneminder zoneminder-build
@@ -71,6 +82,10 @@
   8. [ ] sudo systemctl start zoneminder
   9. [ ] sudo systemctl enable zoneminder
 * PKGBUILD
+  :PROPERTIES:
+  :noexport:
+  :END:
+  
 ** TANGLE zoneminder/PKGBUILD
    
    #+BEGIN_SRC sh :tangle zoneminder/PKGBUILD :noweb yes
@@ -185,18 +200,6 @@
      optdepends=(
          netpbm
      )
-   #+END_SRC
-   #+BEGIN_SRC sh :tangle bin/download-aur-tarballs.sh :shebang #!/bin/bash
-     # script to download Zoneminder dependency build tarballs from AUR
-     set -o errexit
-     cd ../aur
-     wget https://aur.archlinux.org/packages/ca/cambozola/cambozola.tar.gz
-     wget https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
-     wget https://aur.archlinux.org/packages/pe/perl-expect/perl-expect.tar.gz
-     wget https://aur.archlinux.org/packages/pe/perl-net-sftp-foreign/perl-net-sftp-foreign.tar.gz
-     wget https://aur.archlinux.org/packages/pe/perl-php-serialization/perl-php-serialization.tar.gz
-     wget https://aur.archlinux.org/packages/pe/perl-sys-mmap/perl-sys-mmap.tar.gz
-     wget https://aur.archlinux.org/packages/pe/perl-x10/perl-x10.tar.gz
    #+END_SRC
 ** SOURCES
    See https://github.com/ZoneMinder/ZoneMinder/releases
@@ -576,14 +579,14 @@
 * LOG
 ** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
    1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
-* DEBUGGING
-* TODO TESTING
-** 2014-09-03
 * TODO OTHER DISTROS
 * TDW
   1. makepkg --geninteg >> PKGBUILD
   2. makepkg --syncdeps
 * https://wiki.archlinux.org/index.php/Arch_User_Repository
+  1. [ ] run mkaurball
+  2. [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
+  3. [ ] 
 * https://aur.archlinux.org/packages/zoneminder/
 * PKGBUILD  2014-09-03
   # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
