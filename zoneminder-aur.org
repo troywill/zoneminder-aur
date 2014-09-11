@@ -81,11 +81,7 @@
 	   #+END_SRC
   8. [ ] sudo systemctl start zoneminder
   9. [ ] sudo systemctl enable zoneminder
-* PKGBUILD
-  :PROPERTIES:
-  :noexport:
-  :END:
-  
+* PKGBUILD							   :noexport:
 ** TANGLE zoneminder/PKGBUILD
    
    #+BEGIN_SRC sh :tangle zoneminder/PKGBUILD :noweb yes
@@ -575,20 +571,20 @@
          install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
      }
    #+END_SRC
-* PRIMARY DOCUMENTATION
-* LOG
+* PRIMARY DOCUMENTATION						   :noexport:
+* LOG								   :noexport:
 ** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
    1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
-* TODO OTHER DISTROS
-* TDW
+* TODO OTHER DISTROS						   :noexport:
+* TDW								   :noexport:
   1. makepkg --geninteg >> PKGBUILD
   2. makepkg --syncdeps
-* https://wiki.archlinux.org/index.php/Arch_User_Repository
+* https://wiki.archlinux.org/index.php/Arch_User_Repository	   :noexport:
   1. [ ] run mkaurball
   2. [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
   3. [ ] 
-* https://aur.archlinux.org/packages/zoneminder/
-* PKGBUILD  2014-09-03
+* https://aur.archlinux.org/packages/zoneminder/		   :noexport:
+* PKGBUILD  2014-09-03						   :noexport:
   # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
 # Contributor: Jacek Burghardt           <jacek@hebe.us>
 # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
