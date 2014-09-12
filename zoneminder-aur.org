@@ -19,7 +19,7 @@
        cd zoneminder-build
        makepkg -s
      #+END_SRC
-  3. [ ] Copy config files
+  3. (Optional) Copy config files
      #+BEGIN_SRC sh :tangle bin/make.pre.zoneminder.install.backups :shebang #!/bin/bash
        set -o errexit
        set -o verbose
@@ -31,7 +31,7 @@
      #+BEGIN_SRC sh
        pacman --upgrade zoneminder-1.27.0-2-i686.pkg.tar.xz
      #+END_SRC
-  5. [ ] Copy config files
+  5. (Optional) Copy config files
      #+BEGIN_SRC sh :tangle bin/make.post.zoneminder.install.backups :shebang #!/bin/bash
        set -o errexit
        set -o verbose
@@ -39,19 +39,19 @@
        cp -i /etc/php/php.ini php.ini.post.zoneminder.install
        cp -i /etc/httpd/conf/httpd.conf httpd.conf.post.zoneminder.install
      #+END_SRC
-  6. [ ] Configure /etc/httpd/conf/httpd.conf for PHP
+  6. [-] Configure /etc/httpd/conf/httpd.conf for PHP
      1. [ ] Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
      2. [ ] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
-	 #+BEGIN_SRC conf
-           LoadModule mpm_event_module modules/mod_mpm_event.so
-	 #+END_SRC
-	 with
-	 #+BEGIN_SRC conf
-           LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
-	 #+END_SRC
-     3. [ ] add these lines to file:/etc/httpd/conf/httpd.conf:
+	#+BEGIN_SRC conf
+          LoadModule mpm_event_module modules/mod_mpm_event.so
+	#+END_SRC
+	with
+	#+BEGIN_SRC conf
+          LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+	#+END_SRC
+     3. [-] Configure httpd.conf file:/etc/httpd/conf/httpd.conf:
 	1. [ ] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
-            (Note: zoneminder.install attemps to do this but fails)
+	   (Note: zoneminder.install attemps to do this but fails)
 	   #+BEGIN_SRC conf
 	     LoadModule php5_module modules/libphp5.so
 	   #+END_SRC
@@ -59,6 +59,13 @@
 	   #+BEGIN_SRC conf
 	     Include conf/extra/php5_module.conf
 	   #+END_SRC
+	3. [ ] Enable 
+           #+BEGIN_SRC conf
+             LoadModule cgi_module modules/mod_cgi.so           
+           #+END_SRC
+	   See http://httpd.apache.org/docs/current/howto/cgi.html
+	   Search for "cgi_module" Google => site:https://wiki.archlinux.org cgi_module
+
   7. [ ] Mysql (see zoneminder.install)
      1. [ ] Start httpd server
 	#+BEGIN_SRC sh
@@ -575,8 +582,23 @@
 * LOG								   :noexport:
 ** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
    1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
+<<<<<<< HEAD
+* DEBUGGING
+**   
+|        Time | Component |  PID | Level | Message                                                                                                                                 | File                              | Line |
+|-------------+-----------+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------+------|
+| 00:15:18.70 | web_js    | 3770 | ERR   | getStreamCmdResponse stream error: socket_sendto( /tmp/zm/zms-311647s.sock ) failed: No such file or directory - checkStreamForErrors() | ?view=watch                       |      |
+| 00:15:18.60 | web_php   | 3770 | ERR   | socket_sendto( /tmp/zm/zms-311647s.sock ) failed: No such file or directory                                                             | zoneminder/includes/functions.php | 2337 |
+
+* TODO https://github.com/ZoneMinder/ZoneMinder/issues/88
+* TODO TESTING
+** 2014-09-03
+* TODO OTHER DISTROS
+* TDW
+=======
 * TODO OTHER DISTROS						   :noexport:
 * TDW								   :noexport:
+>>>>>>> c636bb21c93fb114be7e8ac14dd1db4a58d2b004
   1. makepkg --geninteg >> PKGBUILD
   2. makepkg --syncdeps
 * https://wiki.archlinux.org/index.php/Arch_User_Repository	   :noexport:
@@ -707,3 +729,17 @@ package() {
   install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
   install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
 }
+* TEMP
+  + https://github.com/eyezm/ZoneMinder/blob/master/src/zm_remote_camera_http.cpp
+  + http://www.ipcamtalk.com/showthread.php?144-Foscam-FI8910W-Firmware-Update-March-20-2014
+  + http://foscam.us/forum/fi8910w-zoneminder-corrupt-jpeg-data-t1782.html
+  + http://mainstreetanswers.org/foscam.php
+  + http://foscam.us/forum/fi9802w-can-t-get-motionn-jpeg-on-zoneminder-t4822.html
+  + http://lachlanmiskin.com/blog/2012/06/25/zoneminder-foscam-fi8918w-war-corrupt-jpeg-data-extraneous-bytes-before-marker-0xd9/
+  + http://www-personal.umd.umich.edu/~dennismv/corruptjpeg.html
+  + http://foscam.us/forum/fi9802w-can-t-get-motionn-jpeg-on-zoneminder-t4822.html
+  + http://sighworld.com/category/zoneminder/
+  + https://bugs.launchpad.net/ubuntu/+source/zoneminder/+bug/1159361
+  + 
+  + 
+  + 
