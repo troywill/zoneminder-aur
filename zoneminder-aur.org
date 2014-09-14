@@ -99,12 +99,12 @@
    
    #+BEGIN_SRC sh :tangle zoneminder/PKGBUILD :noweb yes
      <<CONTRIBUTORS>>
-     # orginally based on debian squeeze package
+     # Orginally based on a Debian Squeeze package
 
      <<PACKAGE_VERSION_DATA>>
 
      backup=( etc/zm.conf )
-     url="https://github.com/ZoneMinder/ZoneMinder/archive/"
+     url="https://github.com/ZoneMinder/ZoneMinder/releases"
      license=( GPL )
 
      <<DEPENDENCIES>>
