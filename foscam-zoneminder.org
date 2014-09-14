@@ -161,5 +161,4 @@
 * Shared data not initialised by capture daemon, some query functions may not be available or produce invalid results
   1. zm_monitor.cpp
   2. /var/cache/zoneminder/images/Zones1.jpg
-
 * /usr/share/cambozola in open_basedir file://etc/php/php.ini
