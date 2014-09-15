@@ -1,4 +1,3 @@
-
 /^;extension=mysql.so/ s/^;//;
 /^#extension=mysql.so/ s/^#//;
 /^;extension=mysqli.so/ s/^;//;
