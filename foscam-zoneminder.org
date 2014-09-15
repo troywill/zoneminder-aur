@@ -1,7 +1,21 @@
 * Introduction
   These are the steps I took to get a Foscam F18910W camera working with Zoneminder.
 * TODO Access the camera
-  1. [ ] Install dhcp
+  1. [ ] file:./bin/set-ip-address.sh
+     #+BEGIN_SRC sh :tangle bin/set-ip-address.sh :shebang #!/bin/bash
+       set -o nounset
+       DEVICE=eno1
+       ADDR="192.168.1.100"
+       # DEFAULT="192.168.15.1"
+       sudo ip link set $DEVICE down
+       sudo ip link set $DEVICE up
+       sudo ip addr add $ADDR/24 dev $DEVICE
+
+       # ADDR="192.168.1.28"
+       # sudo ip addr del $ADDR/24 dev $DEVICE
+       # sudo ip route add default via $DEFAULT dev $DEVICE
+     #+END_SRC
+  2. [ ] Install dhcp
      #+BEGIN_SRC sh
        pacman --sync dhcp
      #+END_SRC
@@ -113,8 +127,8 @@
        }
        
      #+END_SRC
-  2. https://wiki.archlinux.org/index.php/Dhcpd
-  3. file:/etc/dhcpd.conf
+  3. https://wiki.archlinux.org/index.php/Dhcpd
+  4. file:/etc/dhcpd.conf
      #+BEGIN_SRC conf :tangle /etc/dhcpd.conf :padline no
        # Using the google's dns in the example.
        # Change it to 139.96.30.100 if you have a dns server installed
@@ -128,37 +142,25 @@
          range 192.168.1.1 192.168.1.254;
        }
      #+END_SRC
-  4. [ ] systemctl start dhcpd4
-  5. [ ] file:./bin/set-ip-address.sh
-     #+BEGIN_SRC sh :tangle bin/set-ip-address.sh :shebang #!/bin/bash
-       set -o nounset
-       DEVICE=eno1
-       ADDR="192.168.1.100"
-       # DEFAULT="192.168.15.1"
-       sudo ip link set $DEVICE down
-       sudo ip link set $DEVICE up
-       sudo ip addr add $ADDR/24 dev $DEVICE
-
-       # ADDR="192.168.1.28"
-       # sudo ip addr del $ADDR/24 dev $DEVICE
-       # sudo ip route add default via $DEFAULT dev $DEVICE
-     #+END_SRC
+  5. [ ] systemctl start dhcpd4
   6. [ ] Connect camera with ethernet
-  7. [ ] ping -b 192.168.0.0
-     Camera is at 192.168.1.1
-  8. [ ] Configure zoneminder
+     1. [ ] ping -b 192.168.1.0
+	+ Camera is at 192.168.1.XXX
+  7. [ ] Configure zoneminder
      1. [ ] Add New Monitor
 	1. [ ] General/Source Type :: remote
 	2. [ ] Source/Remote Host Name :: user:password@192.168.1.1
-	2. [ ] Source/Remote Host Path :: videostream.cgi
-  9. Warning
+	3. [ ] Source/Remote Host Path :: videostream.cgi
+  8. Warning
      #+BEGIN_SRC conf
        [Sat Sep 13 09:59:53.761153 2014] [:error] [pid 12151] [client ::1:50028] PHP Warning:  chdir(): open_basedir restriction in effect. File(images) is not within the allowed path(s): (/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc:/srv/http/zoneminder) in /srv/http/zoneminder/skins/classic/views/zones.php on line 29, referer: http://localhost/zm/index.php
      #+END_SRC
-*  File(images) is not within the allowed path(s)
+  9. [ ] Control
+     1. [ ] 
+* File(images) is not within the allowed path(s)
    1. http://www.zoneminder.com/wiki/index.php/FAQ
    2. [ ] Add /var to basedir in php.ini
 * Shared data not initialised by capture daemon, some query functions may not be available or produce invalid results
   1. zm_monitor.cpp
   2. /var/cache/zoneminder/images/Zones1.jpg
-* /usr/share/cambozola in open_basedir file://etc/php/php.ini
+* TODO /usr/share/cambozola in open_basedir file://etc/php/php.ini
