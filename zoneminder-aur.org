@@ -548,6 +548,9 @@
         \|^Include /etc/httpd/conf/extra/httpd-zoneminder.conf$|d;
         s|^# Server-pool management (MPM specific)$|\nInclude /etc/httpd/conf/extra/httpd-zoneminder.conf\n&|;
       #+END_SRC
+**** TODO
+     1. fix /tmp/zoneminder
+     2. 
 ** BUILD
 *** Changelog
 **** Removed --enable-crashtrace=no because "WARNING: unrecognized options: --enable-crashtrace"
@@ -1190,14 +1193,161 @@
 * TDW								   :noexport:
   1. makepkg --geninteg >> PKGBUILD
   2. makepkg --syncdeps
+** CMAKE
+*** Config Table
+| ./configure         | Arch Linux                    | Debian Sid             | CMAKE                                                                             |
+|---------------------+-------------------------------+------------------------+-----------------------------------------------------------------------------------|
+| --prefix            | /usr                          | /usr                   |                                                                                   |
+| --enable-crashtrace | no                            | no                     |                                                                                   |
+| --enable-debug      | no                            |                        |                                                                                   |
+| --enable-mmap       | yes                           | yes                    | ZM_NO_MMAP default: OFF                                                           |
+| --sysconfdir        | /etc                          | /etc/zm                |                                                                                   |
+| --with-cgidir       | /srv/http/cgi-bin             | /usr/lib/cgi-bin       | ZM_CGIDIR <prefix>/libexec/zoneminder/cgi-bin                                     |
+| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' |                        | CMAKE_LIBRARY_PATH                                                                |
+| --with-libarch      | lib                           |                        |                                                                                   |
+| --with-ffmpeg       | /usr                          |                        |                                                                                   |
+| --with-mysql        | /usr                          | /usr                   |                                                                                   |
+| --with-webdir       | /srv/http/$pkgbase            | /usr/share/zoneminder  |                                                                                   |
+| --with-webgroup     | http                          | www-data               |                                                                                   |
+| --with-webhost      | localhost                     |                        |                                                                                   |
+| --with-webuser      | http                          | www-data               | ZM_WEB_USER The user apache runs on. Leave empty for automatic detection.         |
+| --host              |                               | $(DEB_HOST_GNU_TYPE)   |                                                                                   |
+| --build             |                               | $(DEB_BUILD_GNU_TYPE)  |                                                                                   |
+| --mandir            |                               | \$${prefix}/share/man  |                                                                                   |
+| --infodir           |                               | \$${prefix}/share/info |                                                                                   |
+| --ffmpeg            |                               | /usr                   |                                                                                   |
+|                     |                               |                        | ZM_RUNDIR /var/run/zm                                                             |
+|                     |                               |                        | ZM_TMPDIR /tmp/zm                                                                 |
+|                     |                               |                        | ZM_LOGDIR /var/log/zm                                                             |
+|                     |                               |                        | ZM_WEBDIR <prefix>/share/zoneminder/www                                           |
+|                     |                               |                        |                                                                                   |
+|                     |                               |                        | ZM_CONTENTDIR  (events and images), default: /var/lib/zoneminder                  |
+|                     |                               |                        | ZM_DB_HOST localhost                                                              |
+|                     |                               |                        | ZM_DB_NAME zm                                                                     |
+|                     |                               |                        | ZM_DB_USER zmuser                                                                 |
+|                     |                               |                        | ZM_DB_PASS zmpass                                                                 |
+|                     |                               |                        |                                                                                   |
+|                     |                               |                        | ZM_WEB_GROUP The group apache runs on, Leave empty to be the same as the web user |
+|                     |                               |                        |                                                                                   |
+Advanced:
+			A list of optional libraries, separated by semicolons, e.g. ssl;theora
+	ZM_MYSQL_ENGINE		MySQL engine to use with database, default: InnoDB
+	ZM_NO_MMAP		Set to ON to not use mmap shared memory. Shouldn't be enabled unless you experience problems with the shared memory. default: OFF
+	ZM_NO_FFMPEG		Set to ON to skip ffmpeg checks and force building ZM without ffmpeg. default: OFF
+	ZM_NO_X10		Set to ON to build ZoneMinder without X10 support. default: OFF
+	ZM_PERL_SUBPREFIX	Use a different directory for the zm perl modules. NOTE: This is a subprefix, e.g. lib will be turned into <prefix>/lib, default: <libarch>/perl5
+	ZM_PERL_USE_PATH	Override the include path for zm perl modules. Useful if you are moving the perl modules without using the ZM_PERL_SUBPREFIX option. default: <prefix>/<zmperlsubprefix>
+*** INSTALL
+    Installing ZoneMinder with cmake
+--------------------------------
+Configuration
+-------------
+cmake by default does not require any parameters, but its possible to override the defaults with the options below.
+
+1. As a command line parameter, e.g. cmake -DCMAKE_VERBOSE_MAKEFILE=ON .
+   
+cmake -DCMAKE_VERBOSE_MAKEFILE=ON -DZM_WEB_USER=http -DZM_CGIDIR=/var/run/zm/ .   
+
+Possible configuration options: 
+	ZM_RUNDIR		Location of transient process files, default: /var/run/zm
+	ZM_TMPDIR		Location of temporary files, default: /tmp/zm
+	ZM_LOGDIR 		Location of generated log files, default: /var/log/zm
+	ZM_WEBDIR		Location of the web files, default: <prefix>/share/zoneminder/www
+	ZM_CGIDIR		Location of the cgi-bin files, default: <prefix>/libexec/zoneminder/cgi-bin
+	ZM_CONTENTDIR		Location of dynamic content (events and images), default: /var/lib/zoneminder
+	ZM_DB_HOST		Hostname where ZoneMinder database located, default: localhost
+	ZM_DB_NAME		Name of ZoneMinder database, default: zm
+	ZM_DB_USER		Name of ZoneMinder database user, default: zmuser
+	ZM_DB_PASS		Password of ZoneMinder database user, default: zmpass
+	ZM_WEB_USER		The user apache or the local web server runs on. Leave empty for automatic detection. If that fails, you can use this variable to force
+	ZM_WEB_GROUP		The group apache or the local web server runs on, Leave empty to be the same as the web user
+Advanced:
+	ZM_EXTRA_LIBS		A list of optional libraries, separated by semicolons, e.g. ssl;theora
+	ZM_MYSQL_ENGINE		MySQL engine to use with database, default: InnoDB
+	ZM_NO_MMAP		Set to ON to not use mmap shared memory. Shouldn't be enabled unless you experience problems with the shared memory. default: OFF
+	ZM_NO_FFMPEG		Set to ON to skip ffmpeg checks and force building ZM without ffmpeg. default: OFF
+	ZM_NO_X10		Set to ON to build ZoneMinder without X10 support. default: OFF
+	ZM_PERL_SUBPREFIX	Use a different directory for the zm perl modules. NOTE: This is a subprefix, e.g. lib will be turned into <prefix>/lib, default: <libarch>/perl5
+	ZM_PERL_USE_PATH	Override the include path for zm perl modules. Useful if you are moving the perl modules without using the ZM_PERL_SUBPREFIX option. default: <prefix>/<zmperlsubprefix>
+
+
+Useful configuration options provided by cmake:
+CMAKE_VERBOSE_MAKEFILE - Set this to ON (default OFF) to see what cmake is doing. Very useful for troubleshooting.
+CMAKE_BUILD_TYPE - Set this to Debug (default Release) to build ZoneMinder with debugging enabled.
+CMAKE_INSTALL_PREFIX - Use this to change the prefix (default /usr/local). This option behaves like --prefix from autoconf. Package maintainers will probably want to set this to "/usr".
+
+Useful environment variables provided by cmake:
+CMAKE_INCLUDE_PATH - Use this to add to the include search path.
+CMAKE_LIBRARY_PATH - Use this to add to the library search path.
+CMAKE_PREFIX_PATH - Use this to add to both include and library search paths. <path>/include will be added to the include search path and <path>/lib to the library search path. Multiple paths can be specified, separated by a : character. For example: export CMAKE_PREFIX_PATH="/opt/libjpeg-turbo:/opt/ffmpeg-from-git"
+
+CFLAGS, CPPFLAGS and other environment variables:
+To append to the CFLAGS and CXXFLAGS, please use the CFLAGS and CXXFLAGS environment variables.
+Or use the CMAKE_C_FLAGS and CMAKE_CXX_FLAGS configuration options.
+To replace the CFLAGS and CXXFLAGS entirely:
++   For the Release build type: use CMAKE_C_FLAGS_RELEASE for the CFLAGS and CMAKE_CXX_FLAGS_RELEASE for the CXXFLAGS
++   For the Debug build type: use CMAKE_C_FLAGS_DEBUG for the CFLAGS and CMAKE_CXX_FLAGS_DEBUG for the CXXFLAGS
+Other important environment variables (such as LDFLAGS) are also supported.
+
+The DESTDIR environment variable is also supported, however it needs to be set before invoking make install. For example: DESTDIR=mydestdir make install
+For more information about DESTDIR, see:
++   http://www.gnu.org/prep/standards/html_node/DESTDIR.html
+
+Basic steps for installing ZoneMinder on a fresh system
+-------------------------------------------------------
+1) After installing all the required dependencies, in the project directory, run "cmake [extra options] ."
+This behaves like ./configure. It is also possible to supply configuration options, e.g. cmake -DZM_DB_PASS="mypass" .
+2) Run "make" to compile ZoneMinder
+3) Run "make install" (as root, or use sudo) to install ZoneMinder to your system.
+4) Create a directory for the content and the necessary symlinks by running zmlinkcontent.sh with the directory you want to use. e.g. ./zmlinkcontent.sh /nfs/zm
+5) Create a database for zoneminder, called "zm".
+6) Create a user for the zoneminder database, called zmuser with password and full privileges to the "zm" database.
+NOTE: The database server, database name, user and password can be different and adjusted during configuration step with the options in this file, or by editing /etc/zm.conf
+7) Populate the zoneminder database using the script zm_create.sql. This should be found in <prefix>/share/zoneminder/db or in the project/db directory.
+
+8) Create an apache virtual host for ZoneMinder. Make sure to use the same paths as ZM_WEBDIR and ZM_CGIDIR in /etc/zm.conf
+9) Create other config if desired (e.g. rsyslog, logrotate and such). Some of this can be found in <prefix>/share/zoneminder/misc or project/misc directory
+10) Setup an init script for your system. Its also possible to use "zmpkg.pl start" and "zmpkg.pl stop" if you can't find a one.
+
+Basic steps for upgrading ZoneMinder
+------------------------------------
+1) If you wish to use the same paths and configuration as the currently installed ZoneMinder, you need to provide cmake with options that match your current installation.
+You can provide those options in the command line to cmake, e.g. cmake -DZM_DB_PASS="blah" -DZM_WEBDIR="/usr/local/share/zoneminder/www" -DCMAKE_INSTALL_FULL_BINDIR="/usr/bin" .
+Or alternatively, for convenience, use the cmakecacheimport.sh script. This reads a zoneminder configuration file (zm.conf) and creates a cmake initial cache file called zm_conf.cmake, which you can then provide to cmake.
+For example:
+./cmakecacheimport.sh /etc/zm.conf
+cmake -C zm_conf.cmake [extra options] .
+
+2) Run "make" to compile ZoneMinder
+3) Run "make install" (as root, or use sudo) to install ZoneMinder to your system.
+4) Depending on your configuration: If the DIR_EVENTS and DIR_IMAGES options are set to default (pointing to web directory/events and web directory/images), You will need to update the symlinks in the web directory to the correct folders. e.g. web directory/events should point to the real events directory, and likewise for the images directory.
+You can use the zmlinkcontent.sh script for this. For example, if /var/lib/zoneminder is the folder that contains the "images" and "events" directories, you can use:
+./zmlinkcontent.sh /var/lib/zoneminder
+By default, the content directory for new installations is /var/lib/zoneminder. This can be overridden in cmake with the ZM_CONTENTDIR option. e.g. cmake -DZM_CONTENTDIR="/some/big/storage/zm" .
+
+5) Run zmupdate.pl to update the database layout to the new version.
+
+Uninstallation:
+---------------
+By default, cmake does not have an uninstall target, however we have added a one. Simply run make uninstall (or DESTDIR=mydestdir make uninstall if a DESTDIR was used) and it will remove all the files that cmake installed.
+It's also possible to do this manually. The file install_manifest.txt contains the list of files installed to the system. This can be used in many ways to delete all files installed by cmake, such as: xargs rm < install_manifest.txt
+
+Contributions:
+--------------
+Please visit our GitHub at http://github.com/ZoneMinder/ZoneMinder
+
+*** CMAKE
+    
+*** Git Branch
+    
 ** Debian
    + https://packages.debian.org/unstable/net/zoneminder
    + https://packages.debian.org/wheezy/zoneminder
-** zoneminder_1.26.5-3.debian.tar.xz  zoneminder_1.26.5.orig.tar.gz
-** Step by step
-   1. [ ] Go to https://packages.debian.org/source/sid/zoneminder
-   2. [ ] Download [[http://ftp.de.debian.org/debian/pool/main/z/zoneminder/zoneminder_1.26.5-3.debian.tar.xz]]
-   3. [ ] Unpack and view rules file for configure parameters
+*** zoneminder_1.26.5-3.debian.tar.xz  zoneminder_1.26.5.orig.tar.gz
+*** Step by step
+    1. [ ] Go to https://packages.debian.org/source/sid/zoneminder
+    2. [ ] Download [[http://ftp.de.debian.org/debian/pool/main/z/zoneminder/zoneminder_1.26.5-3.debian.tar.xz]]
+    3. [ ] Unpack and view rules file for configure parameters
 * https://wiki.archlinux.org/index.php/Arch_User_Repository	   :noexport:
   1. [ ] run mkaurball
   2. [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
