@@ -74,7 +74,6 @@ build() {
 
     export CXXFLAGS=-D__STDC_CONSTANT_MACROS
     ./configure --prefix=/usr \
-        --enable-crashtrace=no \
         --enable-debug=no \
         --enable-mmap=yes \
         --sysconfdir=/etc \
