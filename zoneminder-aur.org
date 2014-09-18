@@ -215,25 +215,20 @@
    
    #+NAME: SOURCES
    #+BEGIN_SRC sh
-     source=(
-         https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
-         httpd-zoneminder.conf
-         zoneminder
-         zoneminder.service
-         zoneminder.php.ini.sed
-         zoneminder.httpd.conf.sed
-     )
+          source=(
+              https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+              httpd-zoneminder.conf
+              zoneminder
+              zoneminder.service
+          )
 
-     sha512sums=(
+          sha512sums=(
       '8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
       'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
       '5454a283ccb656ff21ab4030e3a5eabd15d7415e082fd24bb894e493f881fe1e2d2ca6536bac8b54845940b87b609a0e9d2afa0c0b605860bd650b83a6f7a562'
       'd04aede00d2f008e7851f69a62633f27d4f747b6fa4350e3096415cc7c2659d677707af3e397295010fa05794ff9cbb995c3904e6989ebfbd58ba6b4bfcc002c'
-      '5cf3ed54ed353090d4337777df0da71e2519bc07243ae52fc7994f367505ec8f3c87482af1046d7ef4ce938794c33e736cdb29399b9ff124b8d4b086182bff19'
-      '608ac16a1d74d22ce9ae37285b544b658a80a50cecf296eb704296205b2446af7d52ad2d60b0c859ef941364eb61393640a110b6f9f4942adc3ed319a6a53df0'
-     )
+          )
    #+END_SRC
-   
 *** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
    #+NAME: httpd-zoneminder.conf
    #+BEGIN_SRC conf :tangle zoneminder/httpd-zoneminder.conf :padline no
@@ -521,26 +516,37 @@
 
        <<MOD_CGI.SED>>
 
-       \|^LoadModule php5_module modules/libphp5.so|d;
-       s|^#*LoadModule rewrite_module modules/mod_rewrite.so$|&\nLoadModule php5_module modules/libphp5.so|;
-       \|^# PHP 5|d;
-       \|^Include /etc/httpd/conf/extra/php5_module.conf|d;
-       \|^# ZoneMinder|d;
-       \|^Include /etc/httpd/conf/extra/httpd-zoneminder.conf|d;
-       s|^Include conf/extra/httpd-default.conf|&\n# PHP 5 zoneminder.install.post_install\nInclude /etc/httpd/conf/extra/php5_module.conf\n# ZoneMinder zoneminder.install.post_install\nInclude /etc/httpd/conf/extra/httpd-zoneminder.conf|;
+       <<LIBPHP5.SED>>
+
+       <<HTTPD-ZONEMINDER.CONF.SED>>
      #+END_SRC
-***** mod_mpm_prefork
+***** MOD_MPM_PREFORK.SED
       #+NAME: MOD_MPM_PREFORK.SED
       #+BEGIN_SRC conf
-       	# Use mod_mpm_prefork instead of mod_mpm_event.so because libphp5.so included with
-       	# php-apache does not work with mod_mpm_event (FS#39218).
+       	# Use mod_mpm_prefork instead of mod_mpm_event.so (FS#39218).
        	s|^LoadModule mpm_event_module modules/mod_mpm_event.so$|#&\nLoadModule mpm_prefork_module modules/mod_mpm_prefork.so|;
       #+END_SRC
-***** mod_cgi
+***** MOD_CGI.SED
       #+NAME: MOD_CGI.SED
       #+BEGIN_SRC conf
         # Zoneminder requires cgi
         \|^#LoadModule cgi_module modules/mod_cgi.so$| s|#||;
+      #+END_SRC
+***** LIBPHP5.SED
+      #+NAME: LIBPHP5.SED
+      #+BEGIN_SRC conf
+        # libphp5
+        \|^LoadModule php5_module modules/libphp5.so$|d;
+        s|^#*LoadModule rewrite_module modules/mod_rewrite.so$|&\nLoadModule php5_module modules/libphp5.so|;
+        \|^Include /etc/httpd/conf/extra/php5_module.conf|d;
+        s|^Include conf/extra/httpd-default.conf$|&\nInclude /etc/httpd/conf/extra/php5_module.conf|;
+      #+END_SRC
+***** HTTPD-ZONEMINDER.CONF.SED
+      #+NAME: HTTPD-ZONEMINDER.CONF.SED
+      #+BEGIN_SRC conf
+        # Include httpd-zoneminder.conf
+        \|^Include /etc/httpd/conf/extra/httpd-zoneminder.conf$|d;
+        s|^# Server-pool management (MPM specific)$|\nInclude /etc/httpd/conf/extra/httpd-zoneminder.conf\n&|;
       #+END_SRC
 ** BUILD
    #+NAME: BUILD
@@ -601,6 +607,7 @@
          install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
      }
    #+END_SRC
+
 * CONFIG
 ** httpd.conf file:/tmp/ defcustom org-src-preserve-indentation nil
    #+BEGIN_SRC conf :tangle config/httpd.conf.archorig :padline no

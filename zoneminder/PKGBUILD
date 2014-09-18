@@ -54,23 +54,19 @@ optdepends=(
 
 install=$pkgbase.install
 
-source=(
-    https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
-    httpd-zoneminder.conf
-    zoneminder
-    zoneminder.service
-    zoneminder.php.ini.sed
-    zoneminder.httpd.conf.sed
-)
+    source=(
+        https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+        httpd-zoneminder.conf
+        zoneminder
+        zoneminder.service
+    )
 
-sha512sums=(
- '8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
- 'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
- '5454a283ccb656ff21ab4030e3a5eabd15d7415e082fd24bb894e493f881fe1e2d2ca6536bac8b54845940b87b609a0e9d2afa0c0b605860bd650b83a6f7a562'
- 'd04aede00d2f008e7851f69a62633f27d4f747b6fa4350e3096415cc7c2659d677707af3e397295010fa05794ff9cbb995c3904e6989ebfbd58ba6b4bfcc002c'
- '5cf3ed54ed353090d4337777df0da71e2519bc07243ae52fc7994f367505ec8f3c87482af1046d7ef4ce938794c33e736cdb29399b9ff124b8d4b086182bff19'
- '608ac16a1d74d22ce9ae37285b544b658a80a50cecf296eb704296205b2446af7d52ad2d60b0c859ef941364eb61393640a110b6f9f4942adc3ed319a6a53df0'
-)
+    sha512sums=(
+'8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
+'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
+'5454a283ccb656ff21ab4030e3a5eabd15d7415e082fd24bb894e493f881fe1e2d2ca6536bac8b54845940b87b609a0e9d2afa0c0b605860bd650b83a6f7a562'
+'d04aede00d2f008e7851f69a62633f27d4f747b6fa4350e3096415cc7c2659d677707af3e397295010fa05794ff9cbb995c3904e6989ebfbd58ba6b4bfcc002c'
+    )
 
 build() {
     cd $srcdir/ZoneMinder-$pkgver
