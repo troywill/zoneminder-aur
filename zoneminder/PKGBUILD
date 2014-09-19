@@ -71,8 +71,11 @@ install=$pkgbase.install
 build() {
     cd $srcdir/ZoneMinder-$pkgver
 
-    cmake .
-
+    cmake -DCMAKE_INSTALL_PREFIX=/usr \
+        -DZM_CGIDIR=/srv/http/cgi-bin \
+        -DZM_WEBDIR=/srv/http/zoneminder \
+        -DZM_WEB_USER=http \
+        -DZM_CONTENTDIR=/var/cache/zoneminder
     make V=0
 }
 

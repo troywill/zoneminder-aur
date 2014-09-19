@@ -554,7 +554,7 @@
 ** BUILD
 *** Changelog
 **** Removed --enable-crashtrace=no because "WARNING: unrecognized options: --enable-crashtrace"
-*** Config Table
+*** Config Table #1
 |                     | Arch Linux                    | Debian Sid             |
 |---------------------+-------------------------------+------------------------|
 | --prefix            | /usr                          | /usr                   |
@@ -577,28 +577,65 @@
 | --infodir           |                               | \$${prefix}/share/info |
 | --ffmpeg            |                               | /usr                   |
 
+*** Config Table #2
+| ./configure         | Arch Linux ./configure        |   | CMAKE                             | CMAKE Default                       | Debian Sid             |
+|---------------------+-------------------------------+---+-----------------------------------+-------------------------------------+------------------------|
+| --prefix            | /usr                          | Y | CMAKE_INSTALL_PREFIX              |                                     | /usr                   |
+| --enable-crashtrace | no                            | Y |                                   |                                     | no                     |
+| --enable-debug      | no                            | N |                                   |                                     |                        |
+| --enable-mmap       | yes                           | Y | ZM_NO_MMAP                        | default: OFF                        | yes                    |
+| --sysconfdir        | /etc                          | N |                                   |                                     | /etc/zm                |
+| --with-cgidir       | /srv/http/cgi-bin             | Y | ZM_CGIDIR                         | <prefix>/libexec/zoneminder/cgi-bin | /usr/lib/cgi-bin       |
+| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' | N | CMAKE_LIBRARY_PATH                |                                     |                        |
+| --with-libarch      | lib                           | N |                                   |                                     |                        |
+| --with-ffmpeg       | /usr                          | N |                                   |                                     |                        |
+| --with-mysql        | /usr                          | N |                                   |                                     | /usr                   |
+| --with-webdir       | /srv/http/zoneminder          | Y | ZM_WEBDIR                         | /usr/share/zoneminder/www           | /usr/share/zoneminder  |
+| --with-webgroup     | http                          | N |                                   |                                     |                        |
+| --with-webuser      | http                          | Y | ZM_WEB_USER                       |                                     | www-data               |
+| --host              |                               |   |                                   |                                     | $(DEB_HOST_GNU_TYPE)   |
+| --build             |                               |   |                                   |                                     | $(DEB_BUILD_GNU_TYPE)  |
+| --mandir            |                               |   |                                   |                                     | \$${prefix}/share/man  |
+| --infodir           |                               |   |                                   |                                     | \$${prefix}/share/info |
+| --ffmpeg            |                               |   |                                   |                                     | /usr                   |
+|                     |                               |   | ZM_RUNDIR /var/run/zm             |                                     |                        |
+|                     |                               |   | ZM_TMPDIR /tmp/zm                 |                                     |                        |
+|                     |                               |   | ZM_LOGDIR /var/log/zm             |                                     |                        |
+|                     |                               |   | ZM_WEBDIR                         | <prefix>/share/zoneminder/www       |                        |
+|                     | /var/cache/zoneminder         | X | ZM_CONTENTDIR (events and images) | /var/lib/zoneminder                 |                        |
+|                     |                               |   | ZM_DB_HOST localhost              |                                     |                        |
+|                     |                               |   | ZM_DB_NAME zm                     |                                     |                        |
+|                     |                               |   | ZM_DB_USER zmuser                 |                                     |                        |
+|                     |                               |   | ZM_DB_PASS zmpass                 |                                     |                        |
+|                     |                               |   | ZM_WEB_GROUP                      |                                     |                        |
+
+
 *** BUILD chunk
    #+NAME: BUILD
    #+BEGIN_SRC sh
-     build() {
-         cd $srcdir/ZoneMinder-$pkgver
+          build() {
+              cd $srcdir/ZoneMinder-$pkgver
 
-         cmake .
-
-         make V=0
-     }
+              cmake -DCMAKE_INSTALL_PREFIX=/usr \
+                  -DZM_CGIDIR=/srv/http/cgi-bin \
+                  -DZM_WEBDIR=/srv/http/zoneminder \
+                  -DZM_WEB_USER=http \
+                  -DZM_CONTENTDIR=/var/cache/zoneminder
+              make V=0
+          }
    #+END_SRC
    
 ** PACKAGE
-   #+NAME: PACKAGE
-   #+BEGIN_SRC sh
-     package() {
-         cd $srcdir/ZoneMinder-$pkgver
+*** PACKAGE chunk
+    #+NAME: PACKAGE
+    #+BEGIN_SRC sh
+      package() {
+          cd $srcdir/ZoneMinder-$pkgver
 
-         # make DESTDIR=$pkgdir install FAIL, home dir
-         DESTDIR=$pkgdir make install
-     }
-   #+END_SRC
+          # make DESTDIR=$pkgdir install FAIL, home dir
+          DESTDIR=$pkgdir make install
+      }
+    #+END_SRC
 * CONFIG
 * HOW TO UPLOAD PKGBUILD TO AUR
   1. [ ] run mkaurball
@@ -606,10 +643,6 @@
   3. [ ] [[https://aur.archlinux.org/][Log In]]
   4. [ ] [[https://aur.archlinux.org/submit/][Submit]]
 * PRIMARY DOCUMENTATION						   :noexport:
-* LOG								   :noexport:
-** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
-   1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
-<<<<<<< HEAD
 * DEBUGGING
 **   
 |        Time | Component |  PID | Level | Message                                                                                                                                 | File                              | Line |
