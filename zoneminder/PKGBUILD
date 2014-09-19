@@ -70,51 +70,15 @@ install=$pkgbase.install
 
 build() {
     cd $srcdir/ZoneMinder-$pkgver
-    ./bootstrap.sh
 
-    export CXXFLAGS=-D__STDC_CONSTANT_MACROS
-    ./configure --prefix=/usr \
-        --enable-debug=no \
-        --enable-mmap=yes \
-        --sysconfdir=/etc \
-        --with-cgidir=/srv/http/cgi-bin \
-        --with-extralibs='-L/usr/lib -L/usr/lib/mysql' \
-        --with-libarch=lib \
-        --with-ffmpeg=/usr \
-        --with-mysql=/usr \
-        --with-webdir=/srv/http/$pkgbase \
-        --with-webgroup=http \
-        --with-webhost=localhost \
-        --with-webuser=http \
-        
+    cmake .
+
     make V=0
 }
 
 package() {
     cd $srcdir/ZoneMinder-$pkgver
 
-    make DESTDIR=$pkgdir install
-
-    mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
-    mkdir -p $pkgdir/srv/zoneminder/socks
-    chown -R http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
-    chown -R http.http $pkgdir/srv/zoneminder/socks
-    chmod 0700 $pkgdir/etc/zm.conf
-
-    for i in events images temp; do
-        mv    $pkgdir/srv/http/$pkgbase/$i $pkgdir/var/cache/$pkgbase/$i
-        ln -s /var/cache/$pkgbase/$i       $pkgdir/srv/http/$pkgbase/$i
-        chown -h http.http                 $pkgdir/srv/http/$pkgbase/$i
-    done
-
-    ln -s /srv/http/cgi-bin                  $pkgdir/srv/http/$pkgbase
-    chown -h http.http                       $pkgdir/srv/http/{cgi-bin,$pkgbase,$pkgbase/cgi-bin}
-
-    ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgbase
-    
-    install -D -m 644 $srcdir/httpd-$pkgbase.conf $pkgdir/etc/httpd/conf/extra
-    install -D -m 644 $srcdir/$pkgbase            $pkgdir/etc/rc.d
-    install -D -m 644 $srcdir/$pkgbase.service    $pkgdir/usr/lib/systemd/system
-    install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
-    install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
+    # make DESTDIR=$pkgdir install FAIL, home dir
+    DESTDIR=$pkgdir make install
 }

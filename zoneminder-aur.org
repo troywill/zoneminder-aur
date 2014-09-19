@@ -577,28 +577,14 @@
 | --infodir           |                               | \$${prefix}/share/info |
 | --ffmpeg            |                               | /usr                   |
 
-*** BUILD chunk   
+*** BUILD chunk
    #+NAME: BUILD
    #+BEGIN_SRC sh
      build() {
          cd $srcdir/ZoneMinder-$pkgver
-         ./bootstrap.sh
 
-         export CXXFLAGS=-D__STDC_CONSTANT_MACROS
-         ./configure --prefix=/usr \
-             --enable-debug=no \
-             --enable-mmap=yes \
-             --sysconfdir=/etc \
-             --with-cgidir=/srv/http/cgi-bin \
-             --with-extralibs='-L/usr/lib -L/usr/lib/mysql' \
-             --with-libarch=lib \
-             --with-ffmpeg=/usr \
-             --with-mysql=/usr \
-             --with-webdir=/srv/http/$pkgbase \
-             --with-webgroup=http \
-             --with-webhost=localhost \
-             --with-webuser=http \
-             
+         cmake .
+
          make V=0
      }
    #+END_SRC
@@ -609,33 +595,10 @@
      package() {
          cd $srcdir/ZoneMinder-$pkgver
 
-         make DESTDIR=$pkgdir install
-
-         mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
-         mkdir -p $pkgdir/srv/zoneminder/socks
-         chown -R http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
-         chown -R http.http $pkgdir/srv/zoneminder/socks
-         chmod 0700 $pkgdir/etc/zm.conf
-
-         for i in events images temp; do
-             mv    $pkgdir/srv/http/$pkgbase/$i $pkgdir/var/cache/$pkgbase/$i
-             ln -s /var/cache/$pkgbase/$i       $pkgdir/srv/http/$pkgbase/$i
-             chown -h http.http                 $pkgdir/srv/http/$pkgbase/$i
-         done
-
-         ln -s /srv/http/cgi-bin                  $pkgdir/srv/http/$pkgbase
-         chown -h http.http                       $pkgdir/srv/http/{cgi-bin,$pkgbase,$pkgbase/cgi-bin}
-
-         ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgbase
-         
-         install -D -m 644 $srcdir/httpd-$pkgbase.conf $pkgdir/etc/httpd/conf/extra
-         install -D -m 644 $srcdir/$pkgbase            $pkgdir/etc/rc.d
-         install -D -m 644 $srcdir/$pkgbase.service    $pkgdir/usr/lib/systemd/system
-         install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
-         install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
+         # make DESTDIR=$pkgdir install FAIL, home dir
+         DESTDIR=$pkgdir make install
      }
    #+END_SRC
-
 * CONFIG
 * HOW TO UPLOAD PKGBUILD TO AUR
   1. [ ] run mkaurball
@@ -1195,40 +1158,38 @@
   2. makepkg --syncdeps
 ** CMAKE
 *** Config Table
-| ./configure         | Arch Linux                    | Debian Sid             | CMAKE                                                                             |
-|---------------------+-------------------------------+------------------------+-----------------------------------------------------------------------------------|
-| --prefix            | /usr                          | /usr                   |                                                                                   |
-| --enable-crashtrace | no                            | no                     |                                                                                   |
-| --enable-debug      | no                            |                        |                                                                                   |
-| --enable-mmap       | yes                           | yes                    | ZM_NO_MMAP default: OFF                                                           |
-| --sysconfdir        | /etc                          | /etc/zm                |                                                                                   |
-| --with-cgidir       | /srv/http/cgi-bin             | /usr/lib/cgi-bin       | ZM_CGIDIR <prefix>/libexec/zoneminder/cgi-bin                                     |
-| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' |                        | CMAKE_LIBRARY_PATH                                                                |
-| --with-libarch      | lib                           |                        |                                                                                   |
-| --with-ffmpeg       | /usr                          |                        |                                                                                   |
-| --with-mysql        | /usr                          | /usr                   |                                                                                   |
-| --with-webdir       | /srv/http/$pkgbase            | /usr/share/zoneminder  |                                                                                   |
-| --with-webgroup     | http                          | www-data               |                                                                                   |
-| --with-webhost      | localhost                     |                        |                                                                                   |
-| --with-webuser      | http                          | www-data               | ZM_WEB_USER The user apache runs on. Leave empty for automatic detection.         |
-| --host              |                               | $(DEB_HOST_GNU_TYPE)   |                                                                                   |
-| --build             |                               | $(DEB_BUILD_GNU_TYPE)  |                                                                                   |
-| --mandir            |                               | \$${prefix}/share/man  |                                                                                   |
-| --infodir           |                               | \$${prefix}/share/info |                                                                                   |
-| --ffmpeg            |                               | /usr                   |                                                                                   |
-|                     |                               |                        | ZM_RUNDIR /var/run/zm                                                             |
-|                     |                               |                        | ZM_TMPDIR /tmp/zm                                                                 |
-|                     |                               |                        | ZM_LOGDIR /var/log/zm                                                             |
-|                     |                               |                        | ZM_WEBDIR <prefix>/share/zoneminder/www                                           |
-|                     |                               |                        |                                                                                   |
-|                     |                               |                        | ZM_CONTENTDIR  (events and images), default: /var/lib/zoneminder                  |
-|                     |                               |                        | ZM_DB_HOST localhost                                                              |
-|                     |                               |                        | ZM_DB_NAME zm                                                                     |
-|                     |                               |                        | ZM_DB_USER zmuser                                                                 |
-|                     |                               |                        | ZM_DB_PASS zmpass                                                                 |
-|                     |                               |                        |                                                                                   |
-|                     |                               |                        | ZM_WEB_GROUP The group apache runs on, Leave empty to be the same as the web user |
-|                     |                               |                        |                                                                                   |
+| ./configure         | Arch Linux                    | Debian Sid             | CMAKE                                                                                     |
+|---------------------+-------------------------------+------------------------+-------------------------------------------------------------------------------------------|
+| --prefix            | /usr                          | /usr                   | CMAKE_INSTALL_PREFIX                                                                      |
+| --enable-crashtrace | no                            | no                     |                                                                                           |
+| --enable-debug      | no                            |                        |                                                                                           |
+| --enable-mmap       | yes                           | yes                    | ZM_NO_MMAP default: OFF                                                                   |
+| --sysconfdir        | /etc                          | /etc/zm                |                                                                                           |
+| --with-cgidir       | /srv/http/cgi-bin             | /usr/lib/cgi-bin       | ZM_CGIDIR <prefix>/libexec/zoneminder/cgi-bin => /var/run/zm/                             |
+| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' |                        | CMAKE_LIBRARY_PATH                                                                        |
+| --with-libarch      | lib                           |                        |                                                                                           |
+| --with-ffmpeg       | /usr                          |                        |                                                                                           |
+| --with-mysql        | /usr                          | /usr                   |                                                                                           |
+| --with-webdir       | /srv/http/$pkgbase            | /usr/share/zoneminder  | ZM_WEBDIR default: usr/share/zoneminder/www => /srv/http/$pkgbase                         |
+| --with-webgroup     | http                          | www-data               |                                                                                           |
+| --with-webhost      | localhost                     |                        |                                                                                           |
+| --with-webuser      | http                          | www-data               | ZM_WEB_USER The user apache runs on. Leave empty for automatic detection.                 |
+| --host              |                               | $(DEB_HOST_GNU_TYPE)   |                                                                                           |
+| --build             |                               | $(DEB_BUILD_GNU_TYPE)  |                                                                                           |
+| --mandir            |                               | \$${prefix}/share/man  |                                                                                           |
+| --infodir           |                               | \$${prefix}/share/info |                                                                                           |
+| --ffmpeg            |                               | /usr                   |                                                                                           |
+|                     |                               |                        | ZM_RUNDIR /var/run/zm                                                                     |
+|                     |                               |                        | ZM_TMPDIR /tmp/zm                                                                         |
+|                     |                               |                        | ZM_LOGDIR /var/log/zm                                                                     |
+|                     |                               |                        | ZM_WEBDIR <prefix>/share/zoneminder/www                                                   |
+|                     |                               |                        | ZM_CONTENTDIR  (events and images), default: /var/lib/zoneminder => /var/cache/zoneminder |
+|                     |                               |                        | ZM_DB_HOST localhost                                                                      |
+|                     |                               |                        | ZM_DB_NAME zm                                                                             |
+|                     |                               |                        | ZM_DB_USER zmuser                                                                         |
+|                     |                               |                        | ZM_DB_PASS zmpass                                                                         |
+|                     |                               |                        | ZM_WEB_GROUP          |
+
 Advanced:
 			A list of optional libraries, separated by semicolons, e.g. ssl;theora
 	ZM_MYSQL_ENGINE		MySQL engine to use with database, default: InnoDB
