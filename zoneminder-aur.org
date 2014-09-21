@@ -1,3 +1,8 @@
+      source=("git://github.com/lxde/$_pkgname.git")
+      # Because the source is not static, skip Git checksum:        
+      sha256sums=('SKIP')
+
+
 * Introduction
 * Step by step
   1. [ ] Install AUR dependencies
@@ -7,6 +12,7 @@
        mkdir --parent aur && cd aur
        wget https://aur.archlinux.org/packages/ca/cambozola/cambozola.tar.gz
        wget https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
+       wget https://aur.archlinux.org/packages/pe/perl-time-parsedate/perl-time-parsedate.tar.gz
        wget https://aur.archlinux.org/packages/pe/perl-expect/perl-expect.tar.gz
        wget https://aur.archlinux.org/packages/pe/perl-net-sftp-foreign/perl-net-sftp-foreign.tar.gz
        wget https://aur.archlinux.org/packages/pe/perl-php-serialization/perl-php-serialization.tar.gz
@@ -84,9 +90,10 @@
 	#+END_SRC
      3. [ ] add Zoneminder database
 	#+BEGIN_SRC sh :tangle bin/mysql-setup.sh :shebang #!/usr/bin/bash
+          set -o verbose
           mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
           cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
-          echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
+          echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql
 	#+END_SRC
   9. [ ] systemctl start zoneminder
      #+BEGIN_SRC sh :tangle bin/restart-everything.sh :shebang #!/bin/bash
@@ -94,6 +101,143 @@
        systemctl restart httpd
        systemctl restart zoneminder
      #+END_SRC
+* Chunks
+** httpd-zoneminder-conf
+   #+NAME: httpd-zoneminder.conf
+   #+BEGIN_SRC conf :tangle zoneminder/httpd-zoneminder.conf :padline no
+     # /etc/httpd/conf/extra/httpd-zm.conf
+     # Config for zoneminder web app
+
+     Alias /zm "/srv/http/zoneminder"
+     <Directory "/srv/http/zoneminder">
+       Options -Indexes +MultiViews +FollowSymLinks
+       AllowOverride None
+       Order allow,deny
+       Allow from all
+       # The code unfortunately uses short tags in many places
+       php_value short_open_tag On
+     </Directory>
+
+     ScriptAlias /cgi-bin "/srv/http/cgi-bin"
+     <Directory "/srv/http/cgi-bin">
+       AllowOverride None
+       Options +ExecCGI +FollowSymLinks
+       Order allow,deny
+       Allow from all
+     </Directory>
+   #+END_SRC
+** pkgver-git
+   #+NAME: pkgver-git
+   #+BEGIN_SRC sh
+     pkgver() {
+         cd "$srcdir/$_gitname"
+         printf "%s.r%s.%s.%s" "$pkgver" "$(git rev-list --count HEAD)" "$pkgrel" "$(git rev-parse --short HEAD)"
+     }
+   #+END_SRC
+
+** PACKAGE chunks
+   #+NAME: PACKAGE
+   #+BEGIN_SRC sh
+     package() {
+
+	 cd $srcdir/ZoneMinder-$pkgver
+
+	 DESTDIR=$pkgdir make install
+
+	 <<CREATE_ZONEMINDER_DIRECTORIES>>
+
+	 <<CREATE_AND_LINK_CONTENT_FOLDERS>>
+
+	 <<CREATE_CGI_BIN_LINK>>
+
+	 <<CHANGE_OWNER_AND_GROUP>>
+
+	 <<LINK_CAMBOZOLA>>
+
+	 <<INSTALL_CONF_FILES>>
+
+     }
+
+   #+END_SRC
+
+*** CREATE_ZONEMINDER_DIRECTORIES chunk
+    #+NAME: CREATE_ZONEMINDER_DIRECTORIES
+    #+BEGIN_SRC sh 
+      mkdir -p $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+      mkdir -p $pkgdir/srv/zoneminder/socks
+      chown -Rv http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
+      chown -Rv http.http $pkgdir/srv/zoneminder/socks
+      chmod 0700 $pkgdir/etc/zm.conf
+    #+END_SRC
+    #+TBLNAME: result of original mkdir
+    | /srv                    |
+    | /srv/http               |
+    | /srv/http/cgi-bin       |
+    | /etc                    |
+    | /etc/rc.d               |
+    | /etc/httpd              |
+    | /etc/httpd/conf         |
+    | /etc/httpd/conf/extra   |
+    | /usr                    |
+    | /usr/share              |
+    | /usr/share/db           |
+    | /usr/share/license      |
+    | /usr/lib                |
+    | /usr/lib/systemd        |
+    | /usr/lib/systemd/system |
+    | /var                    |
+    | /var/cache              |
+    | /var/log                |
+**** Change Log
+***** mkdir (2014-09-19)
+      removed
+      #+BEGIN_SRC sh
+	mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
+      #+END_SRC
+      and replaced with
+      #+BEGIN_SRC sh
+	mkdir -p $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+      #+END_SRC
+*** CREATE_AND_LINK_CONTENT_CONTENT_FOLDERS chunk
+    #+NAME: CREATE_AND_LINK_CONTENT_FOLDERS
+    #+BEGIN_SRC sh
+      # Make content directories in /var/cache/zoneminder and link them
+      for i in events images; do
+	  mkdir $pkgdir/var/cache/$pkgbase/$i
+	  ln -s /var/cache/$pkgbase/$i         $pkgdir/srv/http/$pkgbase/$i
+	  chown -v    http.http                $pkgdir/var/cache/$pkgbase/$i
+	  chown -v -h http.http                $pkgdir/srv/http/$pkgbase/$i
+      done
+    #+END_SRC
+*** CREATE_CGI_BIN_LINK
+    #+NAME: CREATE_CGI_BIN_LINK
+    #+BEGIN_SRC sh
+      # Create a link to the Zoneminder cgi binaries
+      ln -sv /srv/http/cgi-bin $pkgdir/srv/http/$pkgbase
+    #+END_SRC
+*** CHANGE_OWNER_AND_GROUP chunk
+    #+NAME: CHANGE_OWNER_AND_GROUP
+    #+BEGIN_SRC sh
+      chown -h http.http $pkgdir/srv/http/{cgi-bin,$pkgbase,$pkgbase/cgi-bin}
+    #+END_SRC
+*** LINK_CAMBOZOLA chunk
+    #+NAME: LINK_CAMBOZOLA
+    #+BEGIN_SRC sh
+      # Link Cambozola
+      ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgbase
+    #+END_SRC
+*** INSTALL_CONF_FILES chunk
+    #+NAME: INSTALL_CONF_FILES
+    #+BEGIN_SRC sh
+      # Install configuration files
+      mkdir -p $pkgdir/etc/httpd/conf/extra
+      install -D -m 644 $srcdir/httpd-$pkgbase.conf $pkgdir/etc/httpd/conf/extra
+      mkdir -p $pkgdir/usr/lib/systemd/system
+      install -D -m 644 $srcdir/$pkgbase.service    $pkgdir/usr/lib/systemd/system
+      install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
+      install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db     
+    #+END_SRC
+    
 * PKGBUILD							   :noexport:
 ** TANGLE zoneminder/PKGBUILD
    
@@ -136,7 +280,7 @@
      pkgbase=zoneminder
      pkgname=zoneminder
      pkgver=1.27.0
-     pkgrel=3
+     pkgrel=4
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      arch=( i686 x86_64 mips64el arm )
    #+END_SRC
@@ -204,6 +348,7 @@
 
      makedepends=(
          netpbm
+         cmake
      )
 
      optdepends=(
@@ -218,14 +363,12 @@
           source=(
               https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
               httpd-zoneminder.conf
-              zoneminder
               zoneminder.service
           )
 
           sha512sums=(
       '8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
       'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-      '5454a283ccb656ff21ab4030e3a5eabd15d7415e082fd24bb894e493f881fe1e2d2ca6536bac8b54845940b87b609a0e9d2afa0c0b605860bd650b83a6f7a562'
       'd04aede00d2f008e7851f69a62633f27d4f747b6fa4350e3096415cc7c2659d677707af3e397295010fa05794ff9cbb995c3904e6989ebfbd58ba6b4bfcc002c'
           )
    #+END_SRC
@@ -554,7 +697,7 @@
 ** BUILD
 *** Changelog
 **** Removed --enable-crashtrace=no because "WARNING: unrecognized options: --enable-crashtrace"
-*** Config Table
+*** Config Table #1
 |                     | Arch Linux                    | Debian Sid             |
 |---------------------+-------------------------------+------------------------|
 | --prefix            | /usr                          | /usr                   |
@@ -577,76 +720,685 @@
 | --infodir           |                               | \$${prefix}/share/info |
 | --ffmpeg            |                               | /usr                   |
 
-*** BUILD chunk   
+*** Config Table #2
+| ./configure         | Arch Linux ./configure        |   | CMAKE                             | CMAKE Default                       | Debian Sid             |
+|---------------------+-------------------------------+---+-----------------------------------+-------------------------------------+------------------------|
+| --prefix            | /usr                          | Y | CMAKE_INSTALL_PREFIX              |                                     | /usr                   |
+| --enable-crashtrace | no                            | Y |                                   |                                     | no                     |
+| --enable-debug      | no                            | N |                                   |                                     |                        |
+| --enable-mmap       | yes                           | Y | ZM_NO_MMAP                        | default: OFF                        | yes                    |
+| --sysconfdir        | /etc                          | N |                                   |                                     | /etc/zm                |
+| --with-cgidir       | /srv/http/cgi-bin             | Y | ZM_CGIDIR                         | <prefix>/libexec/zoneminder/cgi-bin | /usr/lib/cgi-bin       |
+| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' | N | CMAKE_LIBRARY_PATH                |                                     |                        |
+| --with-libarch      | lib                           | N |                                   |                                     |                        |
+| --with-ffmpeg       | /usr                          | N |                                   |                                     |                        |
+| --with-mysql        | /usr                          | N |                                   |                                     | /usr                   |
+| --with-webdir       | /srv/http/zoneminder          | Y | ZM_WEBDIR                         | /usr/share/zoneminder/www           | /usr/share/zoneminder  |
+| --with-webgroup     | http                          | N |                                   |                                     |                        |
+| --with-webuser      | http                          | Y | ZM_WEB_USER                       |                                     | www-data               |
+| --host              |                               |   |                                   |                                     | $(DEB_HOST_GNU_TYPE)   |
+| --build             |                               |   |                                   |                                     | $(DEB_BUILD_GNU_TYPE)  |
+| --mandir            |                               |   |                                   |                                     | \$${prefix}/share/man  |
+| --infodir           |                               |   |                                   |                                     | \$${prefix}/share/info |
+| --ffmpeg            |                               |   |                                   |                                     | /usr                   |
+|                     |                               |   | ZM_RUNDIR /var/run/zm             |                                     |                        |
+|                     |                               |   | ZM_TMPDIR /tmp/zm                 |                                     |                        |
+|                     |                               |   | ZM_LOGDIR /var/log/zm             |                                     |                        |
+|                     |                               |   | ZM_WEBDIR                         | <prefix>/share/zoneminder/www       |                        |
+|                     | /var/cache/zoneminder         | X | ZM_CONTENTDIR (events and images) | /var/lib/zoneminder                 |                        |
+|                     |                               |   | ZM_DB_HOST localhost              |                                     |                        |
+|                     |                               |   | ZM_DB_NAME zm                     |                                     |                        |
+|                     |                               |   | ZM_DB_USER zmuser                 |                                     |                        |
+|                     |                               |   | ZM_DB_PASS zmpass                 |                                     |                        |
+|                     |                               |   | ZM_WEB_GROUP                      |                                     |                        |
+
+
+*** BUILD chunk
    #+NAME: BUILD
    #+BEGIN_SRC sh
-     build() {
-         cd $srcdir/ZoneMinder-$pkgver
-         ./bootstrap.sh
+          build() {
+              cd $srcdir/ZoneMinder-$pkgver
 
-         export CXXFLAGS=-D__STDC_CONSTANT_MACROS
-         ./configure --prefix=/usr \
-             --enable-debug=no \
-             --enable-mmap=yes \
-             --sysconfdir=/etc \
-             --with-cgidir=/srv/http/cgi-bin \
-             --with-extralibs='-L/usr/lib -L/usr/lib/mysql' \
-             --with-libarch=lib \
-             --with-ffmpeg=/usr \
-             --with-mysql=/usr \
-             --with-webdir=/srv/http/$pkgbase \
-             --with-webgroup=http \
-             --with-webhost=localhost \
-             --with-webuser=http \
-             
-         make V=0
-     }
+              cmake -DCMAKE_INSTALL_PREFIX=/usr \
+                  -DZM_CGIDIR=/srv/http/cgi-bin \
+                  -DZM_WEBDIR=/srv/http/zoneminder \
+                  -DZM_WEB_USER=http \
+                  -DZM_CONTENTDIR=/var/cache/zoneminder
+              make V=0
+          }
    #+END_SRC
    
 ** PACKAGE
-   #+NAME: PACKAGE
-   #+BEGIN_SRC sh
-     package() {
-         cd $srcdir/ZoneMinder-$pkgver
+*** PACKAGE chunk
+    #+NAME: PACKAGE
+    #+BEGIN_SRC sh
+      package() {
 
-         make DESTDIR=$pkgdir install
+          cd $srcdir/ZoneMinder-$pkgver
 
+          DESTDIR=$pkgdir make install
+
+          <<CREATE_ZONEMINDER_DIRECTORIES>>
+
+          <<CREATE_AND_LINK_CONTENT_FOLDERS>>
+
+          <<CREATE_CGI_BIN_LINK>>
+
+          <<CHANGE_OWNER_AND_GROUP>>
+
+          <<LINK_CAMBOZOLA>>
+
+          <<INSTALL_CONF_FILES>>
+
+      }
+
+    #+END_SRC
+
+**** CREATE_ZONEMINDER_DIRECTORIES chunk
+     #+NAME: CREATE_ZONEMINDER_DIRECTORIES
+     #+BEGIN_SRC sh 
+       mkdir -p $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+       mkdir -p $pkgdir/srv/zoneminder/socks
+       chown -Rv http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
+       chown -Rv http.http $pkgdir/srv/zoneminder/socks
+       chmod 0700 $pkgdir/etc/zm.conf
+     #+END_SRC
+     #+TBLNAME: result of original mkdir
+     | /srv                    |
+     | /srv/http               |
+     | /srv/http/cgi-bin       |
+     | /etc                    |
+     | /etc/rc.d               |
+     | /etc/httpd              |
+     | /etc/httpd/conf         |
+     | /etc/httpd/conf/extra   |
+     | /usr                    |
+     | /usr/share              |
+     | /usr/share/db           |
+     | /usr/share/license      |
+     | /usr/lib                |
+     | /usr/lib/systemd        |
+     | /usr/lib/systemd/system |
+     | /var                    |
+     | /var/cache              |
+     | /var/log                |
+***** Change Log
+****** mkdir (2014-09-19)
+       removed
+       #+BEGIN_SRC sh
          mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
-         mkdir -p $pkgdir/srv/zoneminder/socks
-         chown -R http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
-         chown -R http.http $pkgdir/srv/zoneminder/socks
-         chmod 0700 $pkgdir/etc/zm.conf
+       #+END_SRC
+       and replaced with
+       #+BEGIN_SRC sh
+         mkdir -p $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+       #+END_SRC
+**** CREATE_AND_LINK_CONTENT_CONTENT_FOLDERS chunk
+     #+NAME: CREATE_AND_LINK_CONTENT_FOLDERS
+     #+BEGIN_SRC sh
+       # Make content directories in /var/cache/zoneminder and link them
+       for i in events images; do
+           mkdir $pkgdir/var/cache/$pkgbase/$i
+           ln -s /var/cache/$pkgbase/$i         $pkgdir/srv/http/$pkgbase/$i
+           chown -v    http.http                $pkgdir/var/cache/$pkgbase/$i
+           chown -v -h http.http                $pkgdir/srv/http/$pkgbase/$i
+       done
+     #+END_SRC
+**** CREATE_CGI_BIN_LINK
+     #+NAME: CREATE_CGI_BIN_LINK
+     #+BEGIN_SRC sh
+       # Create a link to the Zoneminder cgi binaries
+       ln -sv /srv/http/cgi-bin $pkgdir/srv/http/$pkgbase
+     #+END_SRC
+**** CHANGE_OWNER_AND_GROUP chunk
+     #+NAME: CHANGE_OWNER_AND_GROUP
+     #+BEGIN_SRC sh
+       chown -h http.http $pkgdir/srv/http/{cgi-bin,$pkgbase,$pkgbase/cgi-bin}
+     #+END_SRC
+**** LINK_CAMBOZOLA chunk
+     #+NAME: LINK_CAMBOZOLA
+     #+BEGIN_SRC sh
+       # Link Cambozola
+       ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgbase
+     #+END_SRC
+**** INSTALL_CONF_FILES chunk
+     #+NAME: INSTALL_CONF_FILES
+     #+BEGIN_SRC sh
+       # Install configuration files
+       mkdir -p $pkgdir/etc/httpd/conf/extra
+       install -D -m 644 $srcdir/httpd-$pkgbase.conf $pkgdir/etc/httpd/conf/extra
+       mkdir -p $pkgdir/usr/lib/systemd/system
+       install -D -m 644 $srcdir/$pkgbase.service    $pkgdir/usr/lib/systemd/system
+       install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
+       install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db     
+     #+END_SRC
+     
+*** ERROR TABLE
+|      |      | ERROR                                                                                                                    | FIX                                                             |
+|------+------+--------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------|
+| 0919 | 1105 | mv: cannot stat ‘/home/troy/rcs/zoneminder-aur/FRI/pkg/zoneminder/srv/http/zoneminder/events’: No such file or directory | # mv $pkgdir/srv/http/$pkgbase/$i $pkgdir/var/cache/$pkgbase/$i |
+*** Development Log
+|      |      |                                                                                                                                                                                                        |
+|------+------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0919 | 1113 | test and document           mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}} |
+|      |      |                                                                                                                                                                                                        |
+*** Test and Document
+**** mkdir -p
+     #+BEGIN_SRC sh :tangle ./tmp/mkdir01.sh :shebang #!/bin/bash
+       export pkgdir=foo
+       mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
+     #+END_SRC
+* GIT PKGBUILD 							   :noexport:
+** TANGLE zoneminder-git/PKGBUILD
+   
+   #+BEGIN_SRC sh :tangle zoneminder-git/PKGBUILD :noweb yes
+     <<CONTRIBUTORS>>
+     # Orginally based on a Debian Squeeze package
 
-         for i in events images temp; do
-             mv    $pkgdir/srv/http/$pkgbase/$i $pkgdir/var/cache/$pkgbase/$i
-             ln -s /var/cache/$pkgbase/$i       $pkgdir/srv/http/$pkgbase/$i
-             chown -h http.http                 $pkgdir/srv/http/$pkgbase/$i
-         done
+     <<PACKAGE_VERSION_DATA>>
 
-         ln -s /srv/http/cgi-bin                  $pkgdir/srv/http/$pkgbase
-         chown -h http.http                       $pkgdir/srv/http/{cgi-bin,$pkgbase,$pkgbase/cgi-bin}
+     backup=( etc/zm.conf )
+     url="https://github.com/ZoneMinder/ZoneMinder/releases"
+     license=( GPL )
 
-         ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgbase
-         
-         install -D -m 644 $srcdir/httpd-$pkgbase.conf $pkgdir/etc/httpd/conf/extra
-         install -D -m 644 $srcdir/$pkgbase            $pkgdir/etc/rc.d
-         install -D -m 644 $srcdir/$pkgbase.service    $pkgdir/usr/lib/systemd/system
-         install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgbase
-         install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db
-     }
+     <<DEPENDENCIES>>
+
+     install=$pkgbase.install
+
+     <<SOURCES-GIT>> TDW
+     <<BUILD>>
+
+     <<PACKAGE>>
    #+END_SRC
+  
+** CONTRIBUTORS
+   #+NAME: CONTRIBUTORS
+   #+BEGIN_SRC conf :padline no
+     # Contributor: Troy Will                 <troydwill@gmail.com>
+     # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
+     # Contributor: Jacek Burghardt           <jacek@hebe.us>
+     # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
+     # Contributor: Jason Gardner             <buhrietoe@gmail.com>
+     # Contributor: Ross melin                <rdmelin@gmail.com>
+     # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
+     # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+   #+END_SRC
+** PACKAGE VERSION DATA
+   #+NAME: PACKAGE_VERSION_DATA
+   #+BEGIN_SRC sh
+     pkgbase=zoneminder
+     _pkgname=zoneminder
+     pkgname=$_pkgname-git
+     pkgver=1.27.0
+     pkgrel=4
+     pkgdesc='Capture, analyse, record and monitor video security cameras'
+     arch=( i686 x86_64 mips64el arm )
+   #+END_SRC
+** DEPENDENCIES
 
+   #+NAME: DEPENDENCIES-2014-09-03
+   #+BEGIN_SRC sh
+     depends=(
+         apache
+         cambozola
+         gnutls
+         mariadb
+         perl-archive-zip
+         perl-date-manip
+         perl-dbd-mysql
+         perl-dbi
+         perl-expect
+         perl-libwww
+         perl-mime-lite
+         perl-mime-tools
+         perl-php-serialization
+         perl-net-sftp-foreign
+         perl-sys-mmap
+         perl-time-modules
+         perl-x10
+         php
+         php-apache
+         php-gd
+         php-mcrypt
+     )
+
+     makedepends=(
+         netpbm
+     )
+
+     optdepends=(
+         netpbm
+     )
+   #+END_SRC
+   #+NAME: DEPENDENCIES
+   #+BEGIN_SRC sh
+     depends=(
+         apache
+         cambozola
+         gnutls
+         mariadb
+         perl-archive-zip
+         perl-date-manip
+         perl-dbd-mysql
+         perl-dbi
+         perl-expect
+         perl-libwww
+         perl-mime-lite
+         perl-mime-tools
+         perl-php-serialization
+         perl-net-sftp-foreign
+         perl-sys-mmap
+         perl-time-modules
+         perl-x10
+         php
+         php-apache
+         php-gd
+         php-mcrypt
+     )
+
+     makedepends=(
+         netpbm
+         cmake
+     )
+
+     optdepends=(
+         netpbm
+     )
+   #+END_SRC
+** SOURCES
+   See https://github.com/ZoneMinder/ZoneMinder/releases
+   
+   #+NAME: SOURCES-GIT
+   #+BEGIN_SRC sh
+         source=(
+             git://github.com/ZoneMinder/ZoneMinder.git
+             # httpd-zoneminder.conf
+             # zoneminder.service
+         )
+
+         sha512sums=('SKIP');
+         )
+   #+END_SRC
+*** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
+    See `Chunks` section
+*** zoneminder
+   #+NAME: zoneminder
+   #+BEGIN_SRC sh :tangle zoneminder/zoneminder
+     #!/bin/bash
+     daemon_name=zm
+
+     . /etc/rc.conf
+     . /etc/rc.d/functions
+
+     case "$1" in
+         start)
+             stat_busy "Starting Zoneminder"
+             /usr/bin/zmfix -a
+             if /usr/bin/zmpkg.pl start >/dev/null ; then
+                 add_daemon $daemon_name
+                 stat_done
+             else
+                 stat_fail
+                 exit 1
+             fi
+             ;;
+         
+         stop)
+             stat_busy "Stopping Zoneminder"
+             if /usr/bin/zmpkg.pl stop >/dev/null ; then
+                 rm_daemon $daemon_name
+                 stat_done
+             else
+                 stat_fail
+                 exit 1
+             fi
+             ;;
+         
+         reload)
+             stat_busy "Reloading Zoneminder"
+             if /usr/bin/zmpkg.pl graceful >/dev/null ; then
+                 add_daemon $daemon_name
+                 stat_done
+             else
+                 stat_fail
+                 exit 1
+             fi
+             ;;
+         
+         restart)
+             stat_busy "Restarting Zoneminder"
+             if /usr/bin/zmpkg.pl restart >/dev/null ; then
+                 add_daemon $daemon_name
+                 stat_done
+             else
+                 stat_fail
+                 exit 1
+             fi
+             ;;
+         
+         status)
+             stat_busy "Checking Zoneminder status";
+             ck_status $daemon_name
+             ;;
+         
+         ,*)
+             echo "usage: $0 {start|stop|reload|restart|status}"
+     esac
+
+     exit 0
+   #+END_SRC
+*** zoneminder.service
+   #+NAME: zoneminder.service
+   #+BEGIN_SRC conf :tangle zoneminder/zoneminder.service
+     [Unit]
+     Description=Capture, analyse, record and monitor video security cameras
+     After=network.target remote-fs.target
+     Required=mysqld.service
+
+     [Service]
+     Type=forking
+     ExecStart=/usr/bin/zmpkg.pl start
+     ExecRestart=/usr/bin/zmpkg.pl restart
+     ExecStop=/usr/bin/zmpkg.pl stop
+
+     [Install]
+     WantedBy=multi-user.target
+   #+END_SRC
+*** zoneminder.install
+**** tangle zoneminder.install
+     #+NAME: zoneminder.install
+     #+BEGIN_SRC sh :tangle zoneminder/zoneminder.install :padline no :noweb yes
+       pre_install() {
+           set -e
+           abort=false
+           if [ -L /srv/http/zoneminder/events ]; then
+               l=$(readlink /srv/http/zoneminder/events)
+               if [ $l != /var/cache/zoneminder/events ]; then
+                   abort=true
+               fi
+           fi
+           if [ -L /srv/http/zoneminder/images ]; then
+               l=$(readlink /srv/http/zoneminder/images)
+               if [ $l != /var/cache/zoneminder/images ]; then
+                   abort=true
+               fi
+           fi
+           if [ $abort = true ]; then
+               cat >&2 << EOF
+       Aborting installation of zoneminder due to non-default symlinks in
+       /srv/http/zoneminder for the images and/or events directory, which could
+       result in loss of data. Please move your data in each of these directories to
+       /var/cache/zoneminder before installing zoneminder from the package.
+       EOF
+               exit 1
+           fi
+           exit 0
+       }
+
+       post_install() {
+           if [[ -d /var/log/zoneminder ]]; then
+               chmod 0755 /var/log/zoneminder
+               chown http.http /var/log/zoneminder
+           else
+               mkdir -m 0755 /var/log/zoneminder
+               chown http.http /var/log/zoneminder
+           fi
+           if [[ -d /tmp/zoneminder ]]; then
+               chmod 0700 /tmp/zoneminder
+               chown http.http /tmp/zoneminder
+           else
+               mkdir -m 0700 /tmp/zoneminder
+               chown http.http /tmp/zoneminder
+           fi
+
+           # edit /etc/php.ini for Zoneminder
+           sed -e '
+           <<PHP.INI.SED>>
+           ' /etc/php/php.ini > /etc/php/php.ini.zoneminder
+
+           # edit /etc/httpd/conf/httpd.conf for Zoneminder
+           sed -e '
+           <<HTTPD.CONF.SED>>
+           ' /etc/httpd/conf/httpd.conf > /etc/httpd/conf/httpd.conf.zoneminder
+           
+           cat << EOF
+       Note for mysql:
+       ==> To run Zoneminder, you must install the database running mysql service (as root):
+       ==> "rc.d start mysqld" (in initscripts) or "systemctl start mysqld.service" (in systemd)
+       ==> and add Zoneminder database typing (with passsword):
+       ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload"
+       ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p"
+       ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql"
+       ==> (or without passsword):
+       ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f reload"
+       ==> "cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf"
+       ==> "echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+
+       Note for php:
+       ==> You must uncomment that line in /etc/php/php.ini:
+       ==> "extension=mysql.so"
+       ==> check and make sure these are uncommented:
+       ==> "extension=gd.so"
+       ==> "extension=gettext.so"
+       ==> "extension=mcrypt.so"
+       ==> "extension=mysqli.so"
+       ==> "extension=session.so"
+       ==> "extension=sockets.so"
+       ==> "extension=openssl.so"
+       ==> "extension=ftp.so"
+       ==> "extension=zip.so"
+       ==> check and add to open_basedir "/etc" and
+       ==> "/srv/http/zoneminder" like so
+       ==> "open_basedir = /home:/tmp:/usr/share/pear:/etc:/srv/http/zoneminder"
+       ==> and set your timezone in php.ini:
+       ==> "date.timezone = <your_country>/<your_city>"
+
+       Note for apache:
+       ==> You must edit /etc/httpd/conf/httpd.conf and add the line:
+       ==> "LoadModule php5_module modules/libphp5.so"
+       ==> and:
+       ==> "Include /etc/httpd/conf/extra/php5_module.conf"
+       ==> "Include /etc/httpd/conf/extra/httpd-zoneminder.conf"
+       EOF
+       }
+
+       post_upgrade() {
+           post_install
+           /usr/bin/zmupdate.pl -f >/dev/null
+       }
+
+       post_remove() {
+           if [[ -d /tmp/zoneminder ]]; then
+               rm -vr /tmp/zoneminder
+           fi
+           sed -i -e '
+           /^open_basedir/ s/:\/srv\/http\/zoneminder//;
+           /^open_basedir/ s/:\/srv\/http\/zoneminder\///;
+           ' /etc/php/php.ini || read
+           sed -i -e '
+           /^# ZoneMinder/d;
+           /Include \/etc\/httpd\/conf\/extra\/httpd-zoneminder.conf/d;
+           ' /etc/httpd/conf/httpd.conf || read
+           cat << EOF
+       Note:
+       ==> To clean Zoneminder mysql database, run as root (with password):
+       ==> "echo 'delete from user where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql"
+       ==> "echo 'delete from db where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql"
+       ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f drop zm"
+       ==> (or without password):
+       ==> "echo 'delete from user where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+       ==> "echo 'delete from db where User="zmuser";' | mysql --defaults-file=/etc/mysql/my.cnf mysql"
+       ==> "mysqladmin --defaults-file=/etc/mysql/my.cnf -f drop zm"
+
+       ==> Disable http with php if it isn't needed with others servers, 
+       ==> comment or remove that lines in /etc/httpd/conf/httpd.conf:
+       ==> "LoadModule php5_module modules/libphp5.so"
+       ==> "Include /etc/httpd/conf/extra/php5_module.conf"
+
+       ==> Remove line in /etc/httpd/conf/httpd.conf:
+       ==> "Include /etc/httpd/conf/extra/httpd-zoneminder.conf"
+
+       ==> Disable php with mysql if it isn't needed with others servers, 
+       ==> comment that lines in /etc/php/php.ini:
+       ==> "extension=mysql.so"
+       ==> "extension=gd.so"
+       ==> "extension=gettext.so"
+       ==> "extension=mcrypt.so"
+       ==> "extension=mysqli.so"
+       ==> "extension=session.so"
+       ==> "extension=sockets.so"
+       ==> "date.timezone = <my_country>/<my_city>"
+
+       ==> Edit /etc/php/php.ini and remove "/etc" and "/srv/http/zoneminder"
+       ==> in the "open_basedir".
+
+       ==> Remove log files and "zonemider" directory in "/var/log/zoneminder".
+
+       ==> Backup and remove "events", "images" and "temp" dirs in "/var/cache/zoneminder".
+       EOF
+       }
+     #+END_SRC
+**** <<PHP.INI.SED>>
+     #+NAME: PHP.INI.SED
+     #+BEGIN_SRC sh :tangle zoneminder/zoneminder.php.ini.sed :padline no
+       # Enable these libraries by removing the leading comment character
+       \|^;extension=mysql.so$| s|^;||;
+       \|^;extension=mysqli.so$| s|^;||;
+       \|^;extension=gd.so$| s|^;||;
+       \|^;extension=gettext.so$| s|^;||;
+       \|^;extension=mcrypt.so$| s|^;||;
+       \|^;extension=session.so$| s|^;||;
+       \|^;extension=sockets.so$| s|^;||;
+       \|^;extension=openssl.so$| s|^;||;
+       \|^;extension=ftp.so$| s|^;||;
+       \|^;extension=zip.so$| s|^;||;
+
+       # Add zoneminder paths to open_basedir
+       s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/|;
+     #+END_SRC
+**** <<HTTPD.CONF.SED>>
+     #+NAME: HTTPD.CONF.SED
+     #+BEGIN_SRC conf :tangle zoneminder/zoneminder.httpd.conf.sed :padline no :noweb yes
+       <<MOD_MPM_PREFORK.SED>>
+
+       <<MOD_CGI.SED>>
+
+       <<LIBPHP5.SED>>
+
+       <<HTTPD-ZONEMINDER.CONF.SED>>
+     #+END_SRC
+***** MOD_MPM_PREFORK.SED
+      #+NAME: MOD_MPM_PREFORK.SED
+      #+BEGIN_SRC conf
+       	# Use mod_mpm_prefork instead of mod_mpm_event.so (FS#39218).
+       	s|^LoadModule mpm_event_module modules/mod_mpm_event.so$|#&\nLoadModule mpm_prefork_module modules/mod_mpm_prefork.so|;
+      #+END_SRC
+***** MOD_CGI.SED
+      #+NAME: MOD_CGI.SED
+      #+BEGIN_SRC conf
+        # Zoneminder requires cgi
+        \|^#LoadModule cgi_module modules/mod_cgi.so$| s|#||;
+      #+END_SRC
+***** LIBPHP5.SED
+      #+NAME: LIBPHP5.SED
+      #+BEGIN_SRC conf
+        # libphp5
+        \|^LoadModule php5_module modules/libphp5.so$|d;
+        s|^#*LoadModule rewrite_module modules/mod_rewrite.so$|&\nLoadModule php5_module modules/libphp5.so|;
+        \|^Include /etc/httpd/conf/extra/php5_module.conf|d;
+        s|^Include conf/extra/httpd-default.conf$|&\nInclude /etc/httpd/conf/extra/php5_module.conf|;
+      #+END_SRC
+***** HTTPD-ZONEMINDER.CONF.SED
+      #+NAME: HTTPD-ZONEMINDER.CONF.SED
+      #+BEGIN_SRC conf
+        # Include httpd-zoneminder.conf
+        \|^Include /etc/httpd/conf/extra/httpd-zoneminder.conf$|d;
+        s|^# Server-pool management (MPM specific)$|\nInclude /etc/httpd/conf/extra/httpd-zoneminder.conf\n&|;
+      #+END_SRC
+**** TODO
+     1. fix /tmp/zoneminder
+     2. 
+** BUILD
+*** Changelog
+**** Removed --enable-crashtrace=no because "WARNING: unrecognized options: --enable-crashtrace"
+*** Config Table #1
+|                     | Arch Linux                    | Debian Sid             |
+|---------------------+-------------------------------+------------------------|
+| --prefix            | /usr                          | /usr                   |
+| --enable-crashtrace | no                            | no                     |
+| --enable-debug      | no                            |                        |
+| --enable-mmap       | yes                           | yes                    |
+| --sysconfdir        | /etc                          | /etc/zm                |
+| --with-cgidir       | /srv/http/cgi-bin             | /usr/lib/cgi-bin       |
+| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' |                        |
+| --with-libarch      | lib                           |                        |
+| --with-ffmpeg       | /usr                          |                        |
+| --with-mysql        | /usr                          | /usr                   |
+| --with-webdir       | /srv/http/$pkgbase            | /usr/share/zoneminder  |
+| --with-webgroup     | http                          | www-data               |
+| --with-webhost      | localhost                     |                        |
+| --with-webuser      | http                          | www-data               |
+| --host              |                               | $(DEB_HOST_GNU_TYPE)   |
+| --build             |                               | $(DEB_BUILD_GNU_TYPE)  |
+| --mandir            |                               | \$${prefix}/share/man  |
+| --infodir           |                               | \$${prefix}/share/info |
+| --ffmpeg            |                               | /usr                   |
+
+*** Config Table #2
+| ./configure         | Arch Linux ./configure        |   | CMAKE                             | CMAKE Default                       | Debian Sid             |
+|---------------------+-------------------------------+---+-----------------------------------+-------------------------------------+------------------------|
+| --prefix            | /usr                          | Y | CMAKE_INSTALL_PREFIX              |                                     | /usr                   |
+| --enable-crashtrace | no                            | Y |                                   |                                     | no                     |
+| --enable-debug      | no                            | N |                                   |                                     |                        |
+| --enable-mmap       | yes                           | Y | ZM_NO_MMAP                        | default: OFF                        | yes                    |
+| --sysconfdir        | /etc                          | N |                                   |                                     | /etc/zm                |
+| --with-cgidir       | /srv/http/cgi-bin             | Y | ZM_CGIDIR                         | <prefix>/libexec/zoneminder/cgi-bin | /usr/lib/cgi-bin       |
+| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' | N | CMAKE_LIBRARY_PATH                |                                     |                        |
+| --with-libarch      | lib                           | N |                                   |                                     |                        |
+| --with-ffmpeg       | /usr                          | N |                                   |                                     |                        |
+| --with-mysql        | /usr                          | N |                                   |                                     | /usr                   |
+| --with-webdir       | /srv/http/zoneminder          | Y | ZM_WEBDIR                         | /usr/share/zoneminder/www           | /usr/share/zoneminder  |
+| --with-webgroup     | http                          | N |                                   |                                     |                        |
+| --with-webuser      | http                          | Y | ZM_WEB_USER                       |                                     | www-data               |
+| --host              |                               |   |                                   |                                     | $(DEB_HOST_GNU_TYPE)   |
+| --build             |                               |   |                                   |                                     | $(DEB_BUILD_GNU_TYPE)  |
+| --mandir            |                               |   |                                   |                                     | \$${prefix}/share/man  |
+| --infodir           |                               |   |                                   |                                     | \$${prefix}/share/info |
+| --ffmpeg            |                               |   |                                   |                                     | /usr                   |
+|                     |                               |   | ZM_RUNDIR /var/run/zm             |                                     |                        |
+|                     |                               |   | ZM_TMPDIR /tmp/zm                 |                                     |                        |
+|                     |                               |   | ZM_LOGDIR /var/log/zm             |                                     |                        |
+|                     |                               |   | ZM_WEBDIR                         | <prefix>/share/zoneminder/www       |                        |
+|                     | /var/cache/zoneminder         | X | ZM_CONTENTDIR (events and images) | /var/lib/zoneminder                 |                        |
+|                     |                               |   | ZM_DB_HOST localhost              |                                     |                        |
+|                     |                               |   | ZM_DB_NAME zm                     |                                     |                        |
+|                     |                               |   | ZM_DB_USER zmuser                 |                                     |                        |
+|                     |                               |   | ZM_DB_PASS zmpass                 |                                     |                        |
+|                     |                               |   | ZM_WEB_GROUP                      |                                     |                        |
+
+*** BUILD chunk
+   #+NAME: BUILD
+   #+BEGIN_SRC sh
+          build() {
+              cd $srcdir/ZoneMinder-$pkgver
+
+              cmake -DCMAKE_INSTALL_PREFIX=/usr \
+                  -DZM_CGIDIR=/srv/http/cgi-bin \
+                  -DZM_WEBDIR=/srv/http/zoneminder \
+                  -DZM_WEB_USER=http \
+                  -DZM_CONTENTDIR=/var/cache/zoneminder
+              make V=0
+          }
+   #+END_SRC
+   
+** PACKAGE
+   See PACKAGE chunk
 * CONFIG
 * HOW TO UPLOAD PKGBUILD TO AUR
-  1. [ ] run mkaurball
-  2. [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
+  1. [X] run mkaurball
+  2. Read [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
   3. [ ] [[https://aur.archlinux.org/][Log In]]
   4. [ ] [[https://aur.archlinux.org/submit/][Submit]]
 * PRIMARY DOCUMENTATION						   :noexport:
-* LOG								   :noexport:
-** 2014-09-03 Let's attempt to build Zoneminder AUR from https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar.gz
-   1. [ ] Download https://aur.archlinux.org/packages/zo/zoneminder/zoneminder.tar
-<<<<<<< HEAD
 * DEBUGGING
 **   
 |        Time | Component |  PID | Level | Message                                                                                                                                 | File                              | Line |
@@ -1195,40 +1947,38 @@
   2. makepkg --syncdeps
 ** CMAKE
 *** Config Table
-| ./configure         | Arch Linux                    | Debian Sid             | CMAKE                                                                             |
-|---------------------+-------------------------------+------------------------+-----------------------------------------------------------------------------------|
-| --prefix            | /usr                          | /usr                   |                                                                                   |
-| --enable-crashtrace | no                            | no                     |                                                                                   |
-| --enable-debug      | no                            |                        |                                                                                   |
-| --enable-mmap       | yes                           | yes                    | ZM_NO_MMAP default: OFF                                                           |
-| --sysconfdir        | /etc                          | /etc/zm                |                                                                                   |
-| --with-cgidir       | /srv/http/cgi-bin             | /usr/lib/cgi-bin       | ZM_CGIDIR <prefix>/libexec/zoneminder/cgi-bin                                     |
-| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' |                        | CMAKE_LIBRARY_PATH                                                                |
-| --with-libarch      | lib                           |                        |                                                                                   |
-| --with-ffmpeg       | /usr                          |                        |                                                                                   |
-| --with-mysql        | /usr                          | /usr                   |                                                                                   |
-| --with-webdir       | /srv/http/$pkgbase            | /usr/share/zoneminder  |                                                                                   |
-| --with-webgroup     | http                          | www-data               |                                                                                   |
-| --with-webhost      | localhost                     |                        |                                                                                   |
-| --with-webuser      | http                          | www-data               | ZM_WEB_USER The user apache runs on. Leave empty for automatic detection.         |
-| --host              |                               | $(DEB_HOST_GNU_TYPE)   |                                                                                   |
-| --build             |                               | $(DEB_BUILD_GNU_TYPE)  |                                                                                   |
-| --mandir            |                               | \$${prefix}/share/man  |                                                                                   |
-| --infodir           |                               | \$${prefix}/share/info |                                                                                   |
-| --ffmpeg            |                               | /usr                   |                                                                                   |
-|                     |                               |                        | ZM_RUNDIR /var/run/zm                                                             |
-|                     |                               |                        | ZM_TMPDIR /tmp/zm                                                                 |
-|                     |                               |                        | ZM_LOGDIR /var/log/zm                                                             |
-|                     |                               |                        | ZM_WEBDIR <prefix>/share/zoneminder/www                                           |
-|                     |                               |                        |                                                                                   |
-|                     |                               |                        | ZM_CONTENTDIR  (events and images), default: /var/lib/zoneminder                  |
-|                     |                               |                        | ZM_DB_HOST localhost                                                              |
-|                     |                               |                        | ZM_DB_NAME zm                                                                     |
-|                     |                               |                        | ZM_DB_USER zmuser                                                                 |
-|                     |                               |                        | ZM_DB_PASS zmpass                                                                 |
-|                     |                               |                        |                                                                                   |
-|                     |                               |                        | ZM_WEB_GROUP The group apache runs on, Leave empty to be the same as the web user |
-|                     |                               |                        |                                                                                   |
+| ./configure         | Arch Linux                    | Debian Sid             | CMAKE                                                                                     |
+|---------------------+-------------------------------+------------------------+-------------------------------------------------------------------------------------------|
+| --prefix            | /usr                          | /usr                   | CMAKE_INSTALL_PREFIX                                                                      |
+| --enable-crashtrace | no                            | no                     |                                                                                           |
+| --enable-debug      | no                            |                        |                                                                                           |
+| --enable-mmap       | yes                           | yes                    | ZM_NO_MMAP default: OFF                                                                   |
+| --sysconfdir        | /etc                          | /etc/zm                |                                                                                           |
+| --with-cgidir       | /srv/http/cgi-bin             | /usr/lib/cgi-bin       | ZM_CGIDIR <prefix>/libexec/zoneminder/cgi-bin => /var/run/zm/                             |
+| --with-extralibs    | '-L/usr/lib -L/usr/lib/mysql' |                        | CMAKE_LIBRARY_PATH                                                                        |
+| --with-libarch      | lib                           |                        |                                                                                           |
+| --with-ffmpeg       | /usr                          |                        |                                                                                           |
+| --with-mysql        | /usr                          | /usr                   |                                                                                           |
+| --with-webdir       | /srv/http/$pkgbase            | /usr/share/zoneminder  | ZM_WEBDIR default: usr/share/zoneminder/www => /srv/http/$pkgbase                         |
+| --with-webgroup     | http                          | www-data               |                                                                                           |
+| --with-webhost      | localhost                     |                        |                                                                                           |
+| --with-webuser      | http                          | www-data               | ZM_WEB_USER The user apache runs on. Leave empty for automatic detection.                 |
+| --host              |                               | $(DEB_HOST_GNU_TYPE)   |                                                                                           |
+| --build             |                               | $(DEB_BUILD_GNU_TYPE)  |                                                                                           |
+| --mandir            |                               | \$${prefix}/share/man  |                                                                                           |
+| --infodir           |                               | \$${prefix}/share/info |                                                                                           |
+| --ffmpeg            |                               | /usr                   |                                                                                           |
+|                     |                               |                        | ZM_RUNDIR /var/run/zm                                                                     |
+|                     |                               |                        | ZM_TMPDIR /tmp/zm                                                                         |
+|                     |                               |                        | ZM_LOGDIR /var/log/zm                                                                     |
+|                     |                               |                        | ZM_WEBDIR <prefix>/share/zoneminder/www                                                   |
+|                     |                               |                        | ZM_CONTENTDIR  (events and images), default: /var/lib/zoneminder => /var/cache/zoneminder |
+|                     |                               |                        | ZM_DB_HOST localhost                                                                      |
+|                     |                               |                        | ZM_DB_NAME zm                                                                             |
+|                     |                               |                        | ZM_DB_USER zmuser                                                                         |
+|                     |                               |                        | ZM_DB_PASS zmpass                                                                         |
+|                     |                               |                        | ZM_WEB_GROUP          |
+
 Advanced:
 			A list of optional libraries, separated by semicolons, e.g. ssl;theora
 	ZM_MYSQL_ENGINE		MySQL engine to use with database, default: InnoDB
