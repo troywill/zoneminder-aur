@@ -2,54 +2,42 @@
   
 * Introduction
 * Step by step
-** BUILDING the zoneminder package
-*** TODO Build zoneminder dependencies which are in the AUR
-    1. Download the AUR dependencies
+** DONE BUILD the zoneminder package
+*** DONE Build zoneminder dependencies which are in the AUR
+    1. [X] Download the AUR dependencies
        Here's a helper script to download the PKGBUILDS from the AUR:
        #+BEGIN_SRC sh :tangle bin/download-aur-tarballs.sh :shebang #!/bin/bash
          # script to download Zoneminder dependency build tarballs from AUR
          mkdir --parent aur && cd aur
          wget https://aur.archlinux.org/packages/ca/cambozola/cambozola.tar.gz
          wget https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
-         wget https://aur.archlinux.org/packages/pe/perl-time-parsedate/perl-time-parsedate.tar.gz
+         # wget https://aur.archlinux.org/packages/pe/perl-time-parsedate/perl-time-parsedate.tar.gz
          wget https://aur.archlinux.org/packages/pe/perl-expect/perl-expect.tar.gz
          wget https://aur.archlinux.org/packages/pe/perl-net-sftp-foreign/perl-net-sftp-foreign.tar.gz
          wget https://aur.archlinux.org/packages/pe/perl-php-serialization/perl-php-serialization.tar.gz
          wget https://aur.archlinux.org/packages/pe/perl-sys-mmap/perl-sys-mmap.tar.gz
          wget https://aur.archlinux.org/packages/pe/perl-x10/perl-x10.tar.gz
        #+END_SRC
-    2. [ ] Build and install [[https://aur.archlinux.org/packages/perl-astro-suntime][perl-astro-suntime]]
-       1. [ ] Download https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
-       2. [ ] Unpack
-       3. [ ] Change the dependency
-    3. [ ] Build and install [[https://aur.archlinux.org/packages/cambozola][cambozola]]
-    4. [ ] Build and install perl-time-parsedate
-    5. [ ] Build and install perl-expect
-    6. [ ] Build and install perl-net-sftp-foreign
-    7. [ ] Build and install perl-php-serialization
-    8. [ ] Build and install perl-sys-mmap
-    9. [ ] Build and install perl-x10
-
-*** TODO Build and install the zoneminder package
+    2. [X] Build and install [[https://aur.archlinux.org/packages/perl-astro-suntime][perl-astro-suntime]]
+       1. [X] Download https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
+       2. [X] Unpack
+       3. [X] Change the dependency to perl-time-modules
+    3. [X] Build and install [[https://aur.archlinux.org/packages/cambozola][cambozola]]
+    4. [X] Build and install perl-expect
+    5. [X] Build and install perl-net-sftp-foreign
+    6. [X] Build and install perl-php-serialization
+    7. [X] Build and install perl-sys-mmap
+    8. [X] Build and install perl-x10
+*** DONE Build and install the zoneminder package
     #+BEGIN_SRC sh
       makepkg -s
     #+END_SRC
     #+BEGIN_SRC sh
       sudo pacman --upgrade ./zoneminder-1.27.0-4-i686.pkg.tar.xz    
     #+END_SRC
-
-** TODO Configure Apache and PHP
-   5. (Optional) Copy config files
-      #+BEGIN_SRC sh :tangle bin/make.pre.zoneminder.install.backups :shebang #!/bin/bash
-	set -o errexit
-	set -o verbose
-	cd ../config
-	cp -i /etc/php/php.ini php.ini.pre.zoneminder.install
-	cp -i /etc/httpd/conf/httpd.conf httpd.conf.pre.zoneminder.install
-    #+END_SRC
-
-      #+END_SRC
-   7. (Optional, recommended) Copy config files
+** DONE Configure Apache and PHP
+   CLOSED: [2014-09-27 Sat 11:29]
+   1. (Optional, recommended) Copy config files
       #+BEGIN_SRC sh :tangle bin/make.post.zoneminder.install.backups :shebang #!/bin/bash
 	set -o errexit
 	set -o verbose
@@ -57,10 +45,10 @@
 	cp -i /etc/php/php.ini php.ini.post.zoneminder.install
 	cp -i /etc/httpd/conf/httpd.conf httpd.conf.post.zoneminder.install
       #+END_SRC
-   8. [ ] Configure /etc/httpd/conf/httpd.conf
+   2. [X] Configure /etc/httpd/conf/httpd.conf
       1. (Optional, recomended) Read primary documentation https://wiki.archlinux.org/index.php/Apache_HTTP_Server#PHP
-      2. [ ] Configure httpd.conf file:/etc/httpd/conf/httpd.conf:
-	 1. [ ] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
+      2. [X] Configure httpd.conf file:/etc/httpd/conf/httpd.conf:
+	 1. [X] To use mod_mpm_prefork, open file:/etc/httpd/conf/httpd.conf and replace
 	    #+BEGIN_SRC conf
 	      LoadModule mpm_event_module modules/mod_mpm_event.so
 	    #+END_SRC
@@ -68,43 +56,43 @@
 	    #+BEGIN_SRC conf
 	      LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
 	    #+END_SRC
-	 2. [ ] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+	 2. [X] Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
 	    (Note: zoneminder.install attemps to do this but fails)
 	    #+BEGIN_SRC conf
 	      LoadModule php5_module modules/libphp5.so
 	    #+END_SRC
-	 3. [ ] Place this at the end of the Include list: (Note: zoneminder.install did this)
+	 3. [X] Place this at the end of the Include list: (Note: zoneminder.install did this)
 	    #+BEGIN_SRC conf
 	      Include conf/extra/php5_module.conf
 	    #+END_SRC
-	 4. [ ] Place this at the end of the Include list: (Note: zoneminder.install did this)
+	 4. [X] Place this at the end of the Include list: (Note: zoneminder.install did this)
 	    #+BEGIN_SRC conf
 	      Include /etc/httpd/conf/extra/httpd-zoneminder.conf
 	    #+END_SRC
-	 5. [ ] Enable 
+	 5. [X] Enable 
 	    #+BEGIN_SRC conf
 	      LoadModule cgi_module modules/mod_cgi.so           
 	    #+END_SRC
 	    See http://httpd.apache.org/docs/current/howto/cgi.html
 	    Search for "cgi_module" Google => site:https://wiki.archlinux.org cgi_module
-   9. [ ] Configure file://etc/php/php.ini
+   3. [X] Configure file://etc/php/php.ini
       #+BEGIN_SRC conf
 	open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc:/srv/http/zoneminder:/var/cache/zoneminder
       #+END_SRC
-** TODO Setting up the zoneminder database in MySQL
-   1. [ ] Start mysql server
+** DONE Setting up the zoneminder database in MySQL
+   1. [X] Start mysql server
 	 #+BEGIN_SRC sh
 	   systemctl restart mysqld
 	 #+END_SRC
-   2. [ ] add Zoneminder database
+   2. [X] add Zoneminder database
       #+BEGIN_SRC sh :tangle bin/mysql-setup.sh :shebang #!/usr/bin/bash
 	set -o verbose
 	mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload
 	cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf -p
 	echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql --defaults-file=/etc/mysql/my.cnf -p mysql
       #+END_SRC
-** TODO Start the zoneminder service
-   1. [ ] systemctl start zoneminder
+** DONE Start the zoneminder service
+   1. [X] systemctl start zoneminder
       #+BEGIN_SRC sh :tangle bin/restart-everything.sh :shebang #!/bin/bash
 	systemctl restart mysqld
 	systemctl restart httpd
@@ -193,6 +181,21 @@
      sha512sums=('8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
                  'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
                  'cfb0eb87a989236c72741a496ddc6a73aa2696e5beaaca4836d3c231ddb24c7ef5e9f65e7afa49674f2115cbfa4a07c75486e1947ce294c816ddbb875f3b99cf')
+   #+END_SRC
+   #+NAME: SOURCES-GIT
+   #+BEGIN_SRC sh
+     source=(
+         git://github.com/$pkgname/$pkgname.git
+         httpd-zoneminder.conf
+         zoneminder.service
+     )
+     
+     # Because the source is not static, skip Git checksum:        
+     sha512sums=(
+         'SKIP'
+         'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
+         'cfb0eb87a989236c72741a496ddc6a73aa2696e5beaaca4836d3c231ddb24c7ef5e9f65e7afa49674f2115cbfa4a07c75486e1947ce294c816ddbb875f3b99cf'
+     )
    #+END_SRC
 ** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
   #+NAME: httpd-zoneminder.conf
@@ -459,7 +462,24 @@
                   -DZM_CGIDIR=/srv/http/cgi-bin \
                   -DZM_WEBDIR=/srv/http/zoneminder \
                   -DZM_WEB_USER=http \
-                  -DZM_CONTENTDIR=/var/cache/zoneminder
+                  -DZM_CONTENTDIR=/var/cache/zoneminder \
+                  -DZM_LOGDIR=/var/log/zoneminder
+              make V=0
+          }
+   #+END_SRC
+   
+*** BUILD-GIT chunk
+   #+NAME: BUILD-GIT
+   #+BEGIN_SRC sh
+          build() {
+              cd $srcdir/$pkgname
+
+              cmake -DCMAKE_INSTALL_PREFIX=/usr \
+                  -DZM_CGIDIR=/srv/http/cgi-bin \
+                  -DZM_WEBDIR=/srv/http/zoneminder \
+                  -DZM_WEB_USER=http \
+                  -DZM_CONTENTDIR=/var/cache/zoneminder \
+                  -DZM_LOGDIR=/var/log/zoneminder
               make V=0
           }
    #+END_SRC
@@ -568,6 +588,30 @@
        install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgbase/db     
      #+END_SRC
      
+*** PACKAGE-GIT chunk
+    #+NAME: PACKAGE-GIT
+    #+BEGIN_SRC sh
+      package() {
+
+          cd $srcdir/$pkgname
+
+          DESTDIR=$pkgdir make install
+
+          <<CREATE_ZONEMINDER_DIRECTORIES>>
+
+          <<CREATE_AND_LINK_CONTENT_FOLDERS>>
+
+          <<CREATE_CGI_BIN_LINK>>
+
+          <<CHANGE_OWNER_AND_GROUP>>
+
+          <<LINK_CAMBOZOLA>>
+
+          <<INSTALL_CONF_FILES>>
+
+      }
+
+    #+END_SRC
 *** ERROR TABLE
 |      |      | ERROR                                                                                                                    | FIX                                                             |
 |------+------+--------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------|
@@ -707,11 +751,13 @@
      
           install=$pkgbase.install
      
-          <<SOURCES>>
+          <<SOURCES-GIT>>
      
-          <<BUILD>>
+          <<pkgver-git>>
+
+          <<BUILD-GIT>>
      
-          <<PACKAGE>>
+          <<PACKAGE-GIT>>
    #+END_SRC
 ** TANGLE httpd-zoneminder.conf
    #+BEGIN_SRC conf :tangle zoneminder-git/httpd-zoneminder.conf :padline no :noweb yes

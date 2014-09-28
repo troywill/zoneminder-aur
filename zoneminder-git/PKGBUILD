@@ -10,8 +10,8 @@
      
 pkgbase=zoneminder
 pkgname=zoneminder
-pkgver=1.27.0
-pkgrel=4
+pkgver=1.27.0.r34.4.60ce2a2
+pkgrel=1
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm )
      
@@ -55,17 +55,25 @@ optdepends=(
 install=$pkgbase.install
      
 source=(
-    https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+    git://github.com/$pkgname/$pkgname.git
     httpd-zoneminder.conf
     zoneminder.service
 )
 
-sha512sums=('8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
-            'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-            'cfb0eb87a989236c72741a496ddc6a73aa2696e5beaaca4836d3c231ddb24c7ef5e9f65e7afa49674f2115cbfa4a07c75486e1947ce294c816ddbb875f3b99cf')
+# Because the source is not static, skip Git checksum:        
+sha512sums=(
+    'SKIP'
+    'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
+    'cfb0eb87a989236c72741a496ddc6a73aa2696e5beaaca4836d3c231ddb24c7ef5e9f65e7afa49674f2115cbfa4a07c75486e1947ce294c816ddbb875f3b99cf'
+)
      
+pkgver() {
+    cd "$srcdir/$_gitname"
+    printf "%s.r%s.%s.%s" "$pkgver" "$(git rev-list --count HEAD)" "$pkgrel" "$(git rev-parse --short HEAD)"
+}
+
 build() {
-    cd $srcdir/ZoneMinder-$pkgver
+    cd $srcdir/$pkgname
 
     cmake -DCMAKE_INSTALL_PREFIX=/usr \
         -DZM_CGIDIR=/srv/http/cgi-bin \
@@ -78,7 +86,7 @@ build() {
      
 package() {
 
-    cd $srcdir/ZoneMinder-$pkgver
+    cd $srcdir/$pkgname
 
     DESTDIR=$pkgdir make install
 
