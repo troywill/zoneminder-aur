@@ -1,6 +1,7 @@
 # Enable these libraries by removing the leading comment character
 \|^;extension=mysql.so$| s|^;||;
 \|^;extension=mysqli.so$| s|^;||;
+\|^;extension=pdo_mysql.so$| s|^;||;
 \|^;extension=gd.so$| s|^;||;
 \|^;extension=gettext.so$| s|^;||;
 \|^;extension=mcrypt.so$| s|^;||;

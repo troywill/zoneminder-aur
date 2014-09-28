@@ -33,7 +33,7 @@
       makepkg -s
     #+END_SRC
     #+BEGIN_SRC sh
-      sudo pacman --upgrade ./zoneminder-1.27.0-4-i686.pkg.tar.xz    
+      sudo pacman --upgrade ./zoneminder-1.27.0-5-i686.pkg.tar.xz    
     #+END_SRC
 ** DONE Configure Apache and PHP
    CLOSED: [2014-09-27 Sat 11:29]
@@ -126,7 +126,7 @@
      pkgbase=zoneminder
      pkgname=zoneminder
      pkgver=1.27.0
-     pkgrel=4
+     pkgrel=5
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      arch=( i686 x86_64 mips64el arm )
    #+END_SRC
@@ -180,7 +180,8 @@
 
      sha512sums=('8a349558399381a9062365ddc8bd8f815e3800929914096b2e4ea63e4d6dd12054f7b849fab5bea4bcfc87ea60739479a55734c7075a74aab0622d35f1d2bb14'
                  'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-                 'cfb0eb87a989236c72741a496ddc6a73aa2696e5beaaca4836d3c231ddb24c7ef5e9f65e7afa49674f2115cbfa4a07c75486e1947ce294c816ddbb875f3b99cf')
+                 '0dccb53546fb5d73dbcb9a868493f984b409b1f155ae2199c8b3e4a6f18c384a131cccec1c10d3d469d059f4d439cdddbd334a1dbcb2a787228d4359b2c8da02')
+
    #+END_SRC
    #+NAME: SOURCES-GIT
    #+BEGIN_SRC sh
@@ -194,7 +195,7 @@
      sha512sums=(
          'SKIP'
          'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-         'cfb0eb87a989236c72741a496ddc6a73aa2696e5beaaca4836d3c231ddb24c7ef5e9f65e7afa49674f2115cbfa4a07c75486e1947ce294c816ddbb875f3b99cf'
+         '0dccb53546fb5d73dbcb9a868493f984b409b1f155ae2199c8b3e4a6f18c384a131cccec1c10d3d469d059f4d439cdddbd334a1dbcb2a787228d4359b2c8da02'
      )
    #+END_SRC
 ** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
@@ -224,17 +225,22 @@
 ** zoneminder.service
   #+NAME: zoneminder.service
   #+BEGIN_SRC conf
+    # ZoneMinder systemd unit file
+    # This file is intended to work with all Linux distributions
+    
     [Unit]
-    Description=Capture, analyse, record and monitor video security cameras
-    After=network.target remote-fs.target
-    Required=mysqld.service
-
+    Description=ZoneMinder CCTV recording and security system
+    After=network.target mysqld.service httpd.service
+    Requires=mysqld.service httpd.service
+    
     [Service]
+    User=http
     Type=forking
     ExecStart=/usr/bin/zmpkg.pl start
-    ExecRestart=/usr/bin/zmpkg.pl restart
-    ExecStop=/usr/bin/zmpkg.pl stop
-
+    ExecReload=/usr/bin/zmpkg.pl restart
+    ExecStop=/bin/bash -c '[[ "$(/usr/bin/pgrep zmdc.pl)" > 0 ]] && /usr/bin/zmpkg.pl stop'
+    PIDFile="/var/run/zm/zm.pid"
+    
     [Install]
     WantedBy=multi-user.target
   #+END_SRC
@@ -397,6 +403,7 @@
 ** BUILD
 *** Changelog
 **** Removed --enable-crashtrace=no because "WARNING: unrecognized options: --enable-crashtrace"
+**** 2014-09-28 ZM_RUNDIR		Location of transient process files, default: /var/run/zm
 *** Config Table #1
 |                     | Arch Linux                    | Debian Sid             |
 |---------------------+-------------------------------+------------------------|
@@ -463,7 +470,8 @@
                   -DZM_WEBDIR=/srv/http/zoneminder \
                   -DZM_WEB_USER=http \
                   -DZM_CONTENTDIR=/var/cache/zoneminder \
-                  -DZM_LOGDIR=/var/log/zoneminder
+                  -DZM_LOGDIR=/var/log/zoneminder \
+                  -DZM_RUNDIR=/var/run/zm
               make V=0
           }
    #+END_SRC
@@ -479,7 +487,8 @@
                   -DZM_WEBDIR=/srv/http/zoneminder \
                   -DZM_WEB_USER=http \
                   -DZM_CONTENTDIR=/var/cache/zoneminder \
-                  -DZM_LOGDIR=/var/log/zoneminder
+                  -DZM_LOGDIR=/var/log/zoneminder \
+                  -DZM_RUNDIR=/var/run/zm
               make V=0
           }
    #+END_SRC
@@ -513,11 +522,15 @@
 **** CREATE_ZONEMINDER_DIRECTORIES chunk
      #+NAME: CREATE_ZONEMINDER_DIRECTORIES
      #+BEGIN_SRC sh 
+       # BEGIN CREATE_ZONEMINDER_DIRECTORIES
+       mkdir -p $pkgdir/var/run/zm
+       chown -v http.http $pkgdir/var/run/zm
        mkdir -p $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
        mkdir -p $pkgdir/srv/zoneminder/socks
        chown -Rv http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
        chown -Rv http.http $pkgdir/srv/zoneminder/socks
        chmod 0700 $pkgdir/etc/zm.conf
+       # END CREATE_ZONEMINDER_DIRECTORIES
      #+END_SRC
      #+TBLNAME: result of original mkdir
      | /srv                    |
@@ -646,6 +659,7 @@
       # Enable these libraries by removing the leading comment character
       \|^;extension=mysql.so$| s|^;||;
       \|^;extension=mysqli.so$| s|^;||;
+      \|^;extension=pdo_mysql.so$| s|^;||;
       \|^;extension=gd.so$| s|^;||;
       \|^;extension=gettext.so$| s|^;||;
       \|^;extension=mcrypt.so$| s|^;||;
@@ -1628,4 +1642,12 @@ package() {
   + https://bugs.launchpad.net/ubuntu/+source/zoneminder/+bug/1159361
 * https://wiki.archlinux.org/index.php/PKGBUILD
 * Changelog
-**   
+** Sun Sep 28 12:23:24 PDT 2014 [zoneminder.service]
+   I copied the zoneminder.service file found in the misc folder
+** Sun Sep 28 12:34:06 PDT 2014 [/var/run/zm/zm.pid]
+** Sun Sep 28 12:49:01 PDT 2014 \|^;extension=pdo_mysql.so$| s|^;||;
+   
+   
+   
+   
+
