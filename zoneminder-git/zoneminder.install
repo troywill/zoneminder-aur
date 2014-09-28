@@ -33,12 +33,12 @@ post_install() {
         mkdir -m 0755 /var/log/zoneminder
         chown http.http /var/log/zoneminder
     fi
-    if [[ -d /tmp/zoneminder ]]; then
-        chmod 0700 /tmp/zoneminder
-        chown http.http /tmp/zoneminder
+    if [[ -d /tmp/zm ]]; then
+        chmod 0700 /tmp/zm
+        chown http.http /tmp/zm
     else
-        mkdir -m 0700 /tmp/zoneminder
-        chown http.http /tmp/zoneminder
+        mkdir -m 0700 /tmp/zm
+        chown http.http /tmp/zm
     fi
 
     # edit /etc/php.ini for Zoneminder

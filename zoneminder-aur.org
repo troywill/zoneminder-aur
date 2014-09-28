@@ -282,12 +282,12 @@
 	     mkdir -m 0755 /var/log/zoneminder
 	     chown http.http /var/log/zoneminder
 	 fi
-	 if [[ -d /tmp/zoneminder ]]; then
-	     chmod 0700 /tmp/zoneminder
-	     chown http.http /tmp/zoneminder
+	 if [[ -d /tmp/zm ]]; then
+	     chmod 0700 /tmp/zm
+	     chown http.http /tmp/zm
 	 else
-	     mkdir -m 0700 /tmp/zoneminder
-	     chown http.http /tmp/zoneminder
+	     mkdir -m 0700 /tmp/zm
+	     chown http.http /tmp/zm
 	 fi
      
 	 # edit /etc/php.ini for Zoneminder
@@ -471,7 +471,9 @@
                   -DZM_WEB_USER=http \
                   -DZM_CONTENTDIR=/var/cache/zoneminder \
                   -DZM_LOGDIR=/var/log/zoneminder \
-                  -DZM_RUNDIR=/var/run/zm
+                  -DZM_RUNDIR=/var/run/zm \
+                  -DZM_TMPDIR=/tmp/zm \
+                  -DZM_PATH_SOCKS=/tmp/zm
               make V=0
           }
    #+END_SRC
@@ -488,7 +490,9 @@
                   -DZM_WEB_USER=http \
                   -DZM_CONTENTDIR=/var/cache/zoneminder \
                   -DZM_LOGDIR=/var/log/zoneminder \
-                  -DZM_RUNDIR=/var/run/zm
+                  -DZM_RUNDIR=/var/run/zm \
+                  -DZM_TMPDIR=/tmp/zm \
+                  -DZM_PATH_SOCKS=/tmp/zm
               make V=0
           }
    #+END_SRC
@@ -1646,8 +1650,7 @@ package() {
    I copied the zoneminder.service file found in the misc folder
 ** Sun Sep 28 12:34:06 PDT 2014 [/var/run/zm/zm.pid]
 ** Sun Sep 28 12:49:01 PDT 2014 \|^;extension=pdo_mysql.so$| s|^;||;
+** Sun Sep 28 16:48:51 PDT 2014 /tmp/zoneminder => /tmp/zm, -DZM_TMPDIR=/tmp/zm -DZM_PATH_SOCKS=/tmp/zm
    
-   
-   
-   
+
 
