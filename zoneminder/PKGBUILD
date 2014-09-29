@@ -76,7 +76,7 @@ build() {
         -DZM_LOGDIR=/var/log/zoneminder \
         -DZM_RUNDIR=/var/run/zm \
         -DZM_TMPDIR=/tmp/zm \
-        -DZM_PATH_SOCKS=/tmp/zm
+        -DZM_PATH_SOCK=/srv/zoneminder/socks
     make V=0
 }
      

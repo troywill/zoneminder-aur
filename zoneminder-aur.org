@@ -473,7 +473,7 @@
                   -DZM_LOGDIR=/var/log/zoneminder \
                   -DZM_RUNDIR=/var/run/zm \
                   -DZM_TMPDIR=/tmp/zm \
-                  -DZM_PATH_SOCKS=/tmp/zm
+                  -DZM_PATH_SOCK=/srv/zoneminder/socks
               make V=0
           }
    #+END_SRC
@@ -492,7 +492,7 @@
                   -DZM_LOGDIR=/var/log/zoneminder \
                   -DZM_RUNDIR=/var/run/zm \
                   -DZM_TMPDIR=/tmp/zm \
-                  -DZM_PATH_SOCKS=/tmp/zm
+                  -DZM_PATH_SOCK=/srv/zoneminder/socks
               make V=0
           }
    #+END_SRC
@@ -802,7 +802,7 @@
      2. 
 
 * HOW TO UPLOAD PKGBUILD TO AUR
-  1. [ ] run mkaurball
+  1. [ ] run mkaurball (pkgbuild-introspection)
   2. Read [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
   3. [ ] [[https://aur.archlinux.org/][Log In]]
   4. [ ] [[https://aur.archlinux.org/submit/][Submit]]
