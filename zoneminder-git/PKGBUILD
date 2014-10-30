@@ -10,7 +10,7 @@
      
 pkgbase=zoneminder
 pkgname=zoneminder
-pkgver=1.27.0.r37.5.8678205
+pkgver=1.28.0
 pkgrel=1
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm )
@@ -82,8 +82,9 @@ build() {
         -DZM_CONTENTDIR=/var/cache/zoneminder \
         -DZM_LOGDIR=/var/log/zoneminder \
         -DZM_RUNDIR=/var/run/zm \
-        -DZM_TMPDIR=/tmp/zm \
-        -DZM_PATH_SOCKS=/srv/zoneminder/socks
+        -DZM_TMPDIR=/var/tmp \
+        -DZM_SOCKDIR=/srv/zoneminder/socks/ .
+    
     make V=0
 }
      
@@ -104,11 +105,11 @@ package() {
     # END CREATE_ZONEMINDER_DIRECTORIES
 
     # Make content directories in /var/cache/zoneminder and link them
-    for i in events images; do
+    for i in events images temp; do
         mkdir $pkgdir/var/cache/$pkgbase/$i
+        # chown -v    http.http                $pkgdir/var/cache/$pkgbase/$i
         ln -s /var/cache/$pkgbase/$i         $pkgdir/srv/http/$pkgbase/$i
-        chown -v    http.http                $pkgdir/var/cache/$pkgbase/$i
-        chown -v -h http.http                $pkgdir/srv/http/$pkgbase/$i
+        chown -v --no-dereference http.http  $pkgdir/srv/http/$pkgbase/$i
     done
 
     # Create a link to the Zoneminder cgi binaries
