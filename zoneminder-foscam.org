@@ -1,7 +1,7 @@
 * Introduction
   These are the steps I took to get a Foscam F18910W camera working with Zoneminder.
 * TODO Access the camera
-  1. [X] file:./bin/set-ip-address.sh
+  1. [ ] file:./bin/set-ip-address.sh
      #+BEGIN_SRC sh :tangle bin/set-ip-address.sh :shebang #!/bin/bash
        set -o nounset
        DEVICE=eno1
@@ -15,7 +15,7 @@
        # sudo ip addr del $ADDR/24 dev $DEVICE
        # sudo ip route add default via $DEFAULT dev $DEVICE
      #+END_SRC
-  2. [X] Install dhcp
+  2. [ ] Install dhcp
      #+BEGIN_SRC sh
        pacman --sync dhcp
      #+END_SRC
@@ -142,8 +142,8 @@
          range 192.168.1.1 192.168.1.254;
        }
      #+END_SRC
-  5. [X] systemctl start dhcpd4
-  6. [X] Connect camera with ethernet
+  5. [ ] systemctl start dhcpd4
+  6. [ ] Connect camera with ethernet
      #+BEGIN_SRC sh
        ping -b 192.168.1.0
      #+END_SRC
@@ -157,7 +157,7 @@
        [Sat Sep 13 09:59:53.761153 2014] [:error] [pid 12151] [client ::1:50028] PHP Warning:  chdir(): open_basedir restriction in effect. File(images) is not within the allowed path(s): (/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc:/srv/http/zoneminder) in /srv/http/zoneminder/skins/classic/views/zones.php on line 29, referer: http://localhost/zm/index.php
      #+END_SRC
   9. [ ] Control
-     1. [ ] Control Address :: 192.168.1.1
+     1. [ ] Control Address :: 192.168.1.XX
 * File(images) is not within the allowed path(s)
    1. http://www.zoneminder.com/wiki/index.php/FAQ
    2. [ ] Add /var to basedir in php.ini

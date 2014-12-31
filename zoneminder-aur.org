@@ -80,7 +80,7 @@
 
      sha512sums=('ac2a036adac436d76db8bb0b161d063111cc7cc7f6bcb9ca1b46862cfb0285b291926df716df645c0be47b7465bbbf3b1050c85529ff5068bdcc34f1c8ba6df1'
                  'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-                 '0dccb53546fb5d73dbcb9a868493f984b409b1f155ae2199c8b3e4a6f18c384a131cccec1c10d3d469d059f4d439cdddbd334a1dbcb2a787228d4359b2c8da02')
+                 '9d8d21022b224f833492221e6a3e7c8f0bf2272641c37440506d3fccb3995d18121e8725908345cd110513c6226cd60d100daf479953dcc0db12b8c8991c93c5')
    #+END_SRC
    #+NAME: SOURCES-GIT
    #+BEGIN_SRC sh
@@ -124,8 +124,7 @@
 ** zoneminder.service
   #+NAME: zoneminder.service
   #+BEGIN_SRC conf
-    # ZoneMinder systemd unit file
-    # This file is intended to work with all Linux distributions
+    # ZoneMinder systemd unit file for Arch Linux
     
     [Unit]
     Description=ZoneMinder CCTV recording and security system
@@ -137,8 +136,8 @@
     Type=forking
     ExecStart=/usr/bin/zmpkg.pl start
     ExecReload=/usr/bin/zmpkg.pl restart
-    ExecStop=/bin/bash -c '[[ "$(/usr/bin/pgrep zmdc.pl)" > 0 ]] && /usr/bin/zmpkg.pl stop'
-    PIDFile="/var/run/zm/zm.pid"
+    ExecStop=/usr/bin/zmpkg.pl stop
+    PIDFile="/srv/zoneminder/zm.pid"
     
     [Install]
     WantedBy=multi-user.target
@@ -250,7 +249,6 @@
    #+END_SRC
 *** TODO
     1. fix /tmp/zoneminder
-    2. 
 ** POST_REMOVE_CHUNK
    #+NAME: POST_REMOVE_CHUNK
    #+BEGIN_SRC sh
@@ -394,9 +392,9 @@
          -DZM_WEB_USER=http \
          -DZM_CONTENTDIR=/var/cache/zoneminder \
          -DZM_LOGDIR=/var/log/zoneminder \
-         -DZM_RUNDIR=/var/run/zm \
-         -DZM_TMPDIR=/var/tmp \
-         -DZM_SOCKDIR=/srv/zoneminder/socks/ .
+         -DZM_RUNDIR=/srv/zoneminder \
+         -DZM_TMPDIR=/srv/zoneminder/tmp \
+         -DZM_SOCKDIR=/srv/zoneminder/socks .
 
      make V=0
    #+END_SRC
@@ -426,18 +424,18 @@
       }
 
     #+END_SRC
-
 **** CREATE_ZONEMINDER_DIRECTORIES chunk
      #+NAME: CREATE_ZONEMINDER_DIRECTORIES
      #+BEGIN_SRC sh 
        # BEGIN CREATE_ZONEMINDER_DIRECTORIES
-       mkdir -p $pkgdir/var/run/zm
-       chown -v http.http $pkgdir/var/run/zm
-       mkdir -p $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
-       mkdir -p $pkgdir/srv/zoneminder/socks
-       chown -Rv http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
-       chown -Rv http.http $pkgdir/srv/zoneminder/socks
-       chmod 0700 $pkgdir/etc/zm.conf
+       mkdir -p            $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+       chown -Rv http.http $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+
+       mkdir -p           $pkgdir/srv/zoneminder/socks
+       chown -v http.http $pkgdir/srv/zoneminder/socks
+
+       chown -v  http.http $pkgdir/etc/zm.conf 
+       chmod 0700          $pkgdir/etc/zm.conf
        # END CREATE_ZONEMINDER_DIRECTORIES
      #+END_SRC
      #+TBLNAME: result of original mkdir
@@ -543,12 +541,6 @@
 | 0919 | 1113 | test and document           mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}} |
 |      |      |                                                                                                                                                                                                        |
 *** Test and Document
-**** mkdir -p
-     #+BEGIN_SRC sh :tangle ./tmp/mkdir01.sh :shebang #!/bin/bash
-       export pkgdir=foo
-       mkdir -p $pkgdir/{etc/{httpd/conf/extra,rc.d},srv/http/{cgi-bin,$pkgbase},usr/{lib/systemd/system,share/{license/$pkgbase,$pkgbase/db}},var/{cache/$pkgbase,log/$pkgbase}}
-     #+END_SRC
-
 ** SED Transformations
 *** HTTPD.CONF.SED
     #+NAME: HTTPD.CONF.SED
@@ -610,7 +602,6 @@
      #+END_SRC
 * PKGBUILD							   :noexport:
 ** TANGLE zoneminder/PKGBUILD
-   
    #+BEGIN_SRC sh :tangle zoneminder/PKGBUILD :noweb yes :padline no
           <<CONTRIBUTORS>>
           # Orginally based on a Debian Squeeze package
@@ -722,13 +713,18 @@
     2. [ ] Build and install [[https://aur.archlinux.org/packages/perl-astro-suntime][perl-astro-suntime]]
        1. [ ] Download https://aur.archlinux.org/packages/pe/perl-astro-suntime/perl-astro-suntime.tar.gz
        2. [ ] Unpack
-       3. [ ] Change the dependency to perl-time-modules
+       3. [ ] Change the dependency to perl-time-modules from perl-time-parsedate
+       4. [ ] Build and install
     3. [ ] Build and install [[https://aur.archlinux.org/packages/cambozola][cambozola]]
     4. [ ] Build and install perl-expect
     5. [ ] Build and install perl-net-sftp-foreign
     6. [ ] Build and install perl-php-serialization
     7. [ ] Build and install perl-sys-mmap
     8. [ ] Build and install perl-x10
+       1. [ ] Download
+       2. [ ] Unpack
+       3. [ ] Change the dependency to perl-time-modules from perl-time-parsedate
+       4. [ ] Build and install
 *** TODO Build and install the zoneminder package
     #+BEGIN_SRC sh
       makepkg -s
@@ -737,7 +733,6 @@
       sudo pacman --upgrade ./zoneminder-1.27.0-5-i686.pkg.tar.xz    
     #+END_SRC
 ** TODO Configure Apache and PHP
-   CLOSED: [2014-09-27 Sat 11:29]
    1. (Optional, recommended) Copy config files
       #+BEGIN_SRC sh :tangle bin/make.post.zoneminder.install.backups :shebang #!/bin/bash
 	set -o errexit
@@ -805,7 +800,6 @@
   2. makepkg --syncdeps
 ** AUR Links
 *** https://aur.archlinux.org/packages/zoneminder/
-    
 ** Relevant code 1.27
    1. file://srv/http/zoneminder/includes/functions.php
       See function daemonCheck( $daemon=false, $args=false ) L1071
@@ -836,7 +830,6 @@
 | /tmp/zm               | drwxr-xr-x 2 http http 60 Sep 29 09:19 /tmp/zm/                 |
 
 *** https://github.com/ZoneMinder/ZoneMinder/issues/518
-
 *** file:/srv/http/zoneminder/includes/functions.php
     #+BEGIN_SRC perl
       // L1066
@@ -996,6 +989,7 @@ Please visit our GitHub at http://github.com/ZoneMinder/ZoneMinder
     3. [ ] Unpack and view rules file for configure parameters
 ** HOW TO UPLOAD PKGBUILD TO AUR
    1. [ ] run mkaurball (pkgbuild-introspection)
+      + Will end up with a file like zoneminder-1.28.0-1.src.tar.gz
    2. Read [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
    3. [ ] [[https://aur.archlinux.org/][Log In]]
    4. [ ] [[https://aur.archlinux.org/submit/][Submit]]

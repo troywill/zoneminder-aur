@@ -81,9 +81,9 @@ build() {
         -DZM_WEB_USER=http \
         -DZM_CONTENTDIR=/var/cache/zoneminder \
         -DZM_LOGDIR=/var/log/zoneminder \
-        -DZM_RUNDIR=/var/run/zm \
-        -DZM_TMPDIR=/var/tmp \
-        -DZM_SOCKDIR=/srv/zoneminder/socks/ .
+        -DZM_RUNDIR=/srv/zoneminder \
+        -DZM_TMPDIR=/srv/zoneminder/tmp \
+        -DZM_SOCKDIR=/srv/zoneminder/socks .
     
     make V=0
 }
@@ -95,13 +95,14 @@ package() {
     DESTDIR=$pkgdir make install
 
     # BEGIN CREATE_ZONEMINDER_DIRECTORIES
-    mkdir -p $pkgdir/var/run/zm
-    chown -v http.http $pkgdir/var/run/zm
-    mkdir -p $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
-    mkdir -p $pkgdir/srv/zoneminder/socks
-    chown -Rv http.http $pkgdir/{etc/zm.conf,var/{cache/$pkgbase,log/$pkgbase}}
-    chown -Rv http.http $pkgdir/srv/zoneminder/socks
-    chmod 0700 $pkgdir/etc/zm.conf
+    mkdir -p            $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+    chown -Rv http.http $pkgdir/var/{cache/$pkgbase,log/$pkgbase}
+    
+    mkdir -p           $pkgdir/srv/zoneminder/socks
+    chown -v http.http $pkgdir/srv/zoneminder/socks
+    
+    chown -v  http.http $pkgdir/etc/zm.conf 
+    chmod 0700          $pkgdir/etc/zm.conf
     # END CREATE_ZONEMINDER_DIRECTORIES
 
     # Make content directories in /var/cache/zoneminder and link them
