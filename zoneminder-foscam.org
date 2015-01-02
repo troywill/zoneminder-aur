@@ -149,15 +149,16 @@
      #+END_SRC
      + Camera is at 192.168.1.XXX
   7. [ ] Add New Monitor
-     2. [ ] General/Source Type :: remote
-     3. [ ] Source/Remote Host Name :: user:password@192.168.1.1
-     4. [ ] Source/Remote Host Path :: videostream.cgi
+     1. [ ] General/Source Type :: remote
+     2. [ ] Source/Remote Host Name :: user:password@192.168.1.1
+     3. [ ] Source/Remote Host Path :: videostream.cgi
   8. Warning
      #+BEGIN_SRC conf
        [Sat Sep 13 09:59:53.761153 2014] [:error] [pid 12151] [client ::1:50028] PHP Warning:  chdir(): open_basedir restriction in effect. File(images) is not within the allowed path(s): (/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc:/srv/http/zoneminder) in /srv/http/zoneminder/skins/classic/views/zones.php on line 29, referer: http://localhost/zm/index.php
      #+END_SRC
   9. [ ] Control
-     1. [ ] Control Address :: 192.168.1.XX
+     1. [ ] 
+     2. [ ] Control Address :: 192.168.1.XX
 * File(images) is not within the allowed path(s)
    1. http://www.zoneminder.com/wiki/index.php/FAQ
    2. [ ] Add /var to basedir in php.ini
