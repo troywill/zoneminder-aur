@@ -12,4 +12,4 @@
 \|^;extension=zip.so$| s|^;||;
 
 # Add zoneminder paths to open_basedir
-s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/|;
+s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks|;

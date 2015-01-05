@@ -1,20 +1,28 @@
-# Maintainer: Troy Will <troydwill@gmail.com>
-pkgname=zoneminder
+# Maintainer: Troy Will <troydwill at gmail dot com>
+# Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
+# Contributor: Jacek Burghardt           <jacek@hebe.us>
+# Contributor: Vojtech Aschenbrenner     <v@asch.cz>
+# Contributor: Jason Gardner             <buhrietoe@gmail.com>
+# Contributor: Ross melin                <rdmelin@gmail.com>
+# Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
+# Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+# Orginally based on a Debian Squeeze package
+_pkgname=zoneminder
+pkgname=zoneminder-git
 pkgver=1.28.0
-pkgrel=4
+pkgrel=1
 pkgdesc='Capture, analyse, record and monitor video security cameras'
-arch=( i686 x86_64 mips64el arm )
-     
+arch=( i686 x86_64 mips64el arm armv7h )
 backup=( etc/zm.conf )
 url="https://github.com/ZoneMinder/ZoneMinder/releases"
 license=( GPL )
-     
 depends=(
     apache
     cambozola
     gnutls
     mariadb
     perl-archive-zip
+    perl-astro-suntime-zoneminder
     perl-date-manip
     perl-dbd-mysql
     perl-dbi
@@ -22,49 +30,45 @@ depends=(
     perl-libwww
     perl-mime-lite
     perl-mime-tools
-    perl-php-serialization
     perl-net-sftp-foreign
+    perl-php-serialization
     perl-sys-mmap
     perl-time-modules
-    perl-x10
+    perl-x10-zoneminder
     php
     php-apache
     php-gd
     php-mcrypt
     polkit
 )
-
 makedepends=(
     netpbm
     cmake
 )
-
 optdepends=(
     netpbm
 )
-     
-install=$pkgbase.install
+install=$_pkgname.install
      
 source=(
-    git://github.com/$pkgname/$pkgname.git
+    git://github.com/$_pkgname/$_pkgname.git
     httpd-zoneminder.conf
     zoneminder.service
 )
-
 # Because the source is not static, skip Git checksum:        
 sha512sums=(
     'SKIP'
     'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-    '0dccb53546fb5d73dbcb9a868493f984b409b1f155ae2199c8b3e4a6f18c384a131cccec1c10d3d469d059f4d439cdddbd334a1dbcb2a787228d4359b2c8da02'
+    '9d8d21022b224f833492221e6a3e7c8f0bf2272641c37440506d3fccb3995d18121e8725908345cd110513c6226cd60d100daf479953dcc0db12b8c8991c93c5'
 )
      
 pkgver() {
-    cd "$srcdir/$_gitname"
+    cd "$_pkgname"
     printf "%s.r%s.%s.%s" "$pkgver" "$(git rev-list --count HEAD)" "$pkgrel" "$(git rev-parse --short HEAD)"
 }
 
 build() {
-    cd $srcdir/$pkgname
+    cd $srcdir/$_pkgname
 
     cmake -DCMAKE_INSTALL_PREFIX=/usr \
         -DZM_CGIDIR=/srv/http/cgi-bin \
@@ -81,13 +85,13 @@ build() {
      
 package() {
 
-    cd $srcdir/$pkgname
+    cd $srcdir/$_pkgname
 
     DESTDIR=$pkgdir make install
 
     # BEGIN CREATE_ZONEMINDER_DIRECTORIES
-    mkdir -pv           $pkgdir/var/{cache/$pkgname,log/$pkgname}
-    chown -Rv http.http $pkgdir/var/{cache/$pkgname,log/$pkgname}
+    mkdir -pv           $pkgdir/var/{cache/zoneminder,log/zoneminder}
+    chown -Rv http.http $pkgdir/var/{cache/zoneminder,log/zoneminder}
     
     mkdir -pv          $pkgdir/srv/zoneminder/socks
     chown -v http.http $pkgdir/srv/zoneminder/socks
@@ -101,26 +105,28 @@ package() {
 
     # Make content directories in /var/cache/zoneminder and to link them in /srv/http/zoneminder
     for i in events images temp; do
-        mkdir $pkgdir/var/cache/$pkgname/$i
-        chown -v    http.http                $pkgdir/var/cache/$pkgname/$i
-        ln -s /var/cache/$pkgname/$i         $pkgdir/srv/http/$pkgname/$i
-        chown -v --no-dereference http.http  $pkgdir/srv/http/$pkgname/$i
+        mkdir              $pkgdir/var/cache/$_pkgname/$i
+        chown -v http.http $pkgdir/var/cache/$_pkgname/$i
+        ln -s                     /var/cache/$_pkgname/$i $pkgdir/srv/http/$_pkgname/$i
+        chown -v --no-dereference http.http               $pkgdir/srv/http/$_pkgname/$i
     done
 
     # Create a link to the Zoneminder cgi binaries
-    ln -sv /srv/http/cgi-bin $pkgdir/srv/http/$pkgname
+    ln -sv /srv/http/cgi-bin $pkgdir/srv/http/$_pkgname
 
-    chown -h http.http $pkgdir/srv/http/{cgi-bin,$pkgname,$pkgname/cgi-bin}
+    chown -h http.http $pkgdir/srv/http/{cgi-bin,$_pkgname,$_pkgname/cgi-bin}
 
     # Link Cambozola
-    ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$pkgname
+    ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$_pkgname
 
     # Install configuration files
-    mkdir -p $pkgdir/etc/httpd/conf/extra
-    install -D -m 644 $srcdir/httpd-$pkgname.conf $pkgdir/etc/httpd/conf/extra
-    mkdir -p $pkgdir/usr/lib/systemd/system
-    install -D -m 644 $srcdir/$pkgname.service    $pkgdir/usr/lib/systemd/system
-    install -D -m 644 COPYING                     $pkgdir/usr/share/license/$pkgname
-    install -D -m 644 db/zm*.sql                  $pkgdir/usr/share/$pkgname/db     
+    mkdir -p                                       $pkgdir/etc/httpd/conf/extra
+    install -D -m 644 $srcdir/httpd-$_pkgname.conf $pkgdir/etc/httpd/conf/extra
+    
+    mkdir -p                                    $pkgdir/usr/lib/systemd/system
+    install -D -m 644 $srcdir/$_pkgname.service $pkgdir/usr/lib/systemd/system
+    
+    install -D -m 644 COPYING     $pkgdir/usr/share/license/$_pkgname
+    install -D -m 644 db/zm*.sql  $pkgdir/usr/share/$_pkgname/db     
 
 }
