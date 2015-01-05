@@ -1608,25 +1608,20 @@ Please visit our GitHub at http://github.com/ZoneMinder/ZoneMinder
        s|^# Server-pool management (MPM specific)$|\nInclude /etc/httpd/conf/extra/httpd-zoneminder.conf\n&|;
      #+END_SRC
 *** PHP.INI.SED
-    1. [ ] Check that 
-
-    
-
-    
     #+NAME: PHP.INI.SED
     #+BEGIN_SRC sh
       # Enable these libraries by removing the leading comment character
-      \|^;extension=mysql.so$| s|^;||;
-      \|^;extension=mysqli.so$| s|^;||;
+      \|^;extension=mysql.so$|     s|^;||;
+      \|^;extension=mysqli.so$|    s|^;||;
       \|^;extension=pdo_mysql.so$| s|^;||;
-      \|^;extension=gd.so$| s|^;||;
-      \|^;extension=gettext.so$| s|^;||;
-      \|^;extension=mcrypt.so$| s|^;||;
-      \|^;extension=session.so$| s|^;||;
-      \|^;extension=sockets.so$| s|^;||;
-      \|^;extension=openssl.so$| s|^;||;
-      \|^;extension=ftp.so$| s|^;||;
-      \|^;extension=zip.so$| s|^;||;
+      \|^;extension=gd.so$|        s|^;||;
+      \|^;extension=gettext.so$|   s|^;||;
+      \|^;extension=mcrypt.so$|    s|^;||;
+      \|^;extension=session.so$|   s|^;||;
+      \|^;extension=sockets.so$|   s|^;||;
+      \|^;extension=openssl.so$|   s|^;||;
+      \|^;extension=ftp.so$|       s|^;||;
+      \|^;extension=zip.so$|       s|^;||;
 
       # Add zoneminder paths to open_basedir
       s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks|;
