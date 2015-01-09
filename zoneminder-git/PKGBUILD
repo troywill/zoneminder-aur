@@ -17,13 +17,12 @@ backup=( etc/zm.conf )
 url="https://github.com/ZoneMinder/ZoneMinder/releases"
 license=( GPL )
 depends=(
-    perl-astro-suntime-zoneminder
-    perl-x10-zoneminder
     apache
     cambozola
     gnutls
     mariadb
     perl-archive-zip
+    perl-astro-suntime-zoneminder
     perl-date-manip
     perl-dbd-mysql
     perl-dbi
@@ -35,6 +34,7 @@ depends=(
     perl-php-serialization
     perl-sys-mmap
     perl-time-modules
+    perl-x10-zoneminder
     php
     php-apache
     php-gd
