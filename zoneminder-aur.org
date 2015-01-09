@@ -192,6 +192,9 @@
 ** sudo journalctl -f
 ** https://github.com/ZoneMinder/ZoneMinder/pull/524
 * TDW 	:noexport:
+** TDW Action Log
+*** 2015-01-08 Improve installation and upgrade instructions
+    1. Note 1 :: NOW    
 ** AUR resources
 *** [[https://aur.archlinux.org/][Log In]]
 *** https://aur.archlinux.org/packages/zoneminder/    
@@ -1272,6 +1275,7 @@ Please visit our GitHub at http://github.com/ZoneMinder/ZoneMinder
      <<POST_REMOVE_CHUNK>>
 
    #+END_SRC
+*** 
 *** TODO
     1. fix /tmp/zoneminder
 ** POST_REMOVE_CHUNK
