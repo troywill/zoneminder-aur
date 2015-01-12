@@ -1,0 +1,14 @@
+* Issue 1: Pause [2014-01-10]
+** How to recreate
+   1. http://192.168.1.14/zm/index.php?view=event&eid=172&filter[terms][0][attr]=MonitorId&filter[terms][0][op]=%3D&filter[terms][0][val]=1&sort_field=StartTime&sort_asc=1&page=1
+** Error Logs
+*** web_php and web_php
+Jan 10 16:50:39 OPENGTS web_php[1869]: ERR [socket_sendto( /srv/zoneminder/socks/zms-796842s.sock ) failed: No such file or directory]
+Jan 10 16:50:39 OPENGTS web_js[1869]: ERR [getCmdResponse stream error: socket_sendto( /srv/zoneminder/socks/zms-796842s.sock ) failed: No such file or directory - checkStreamForErrors()]
+*** http/error.log
+[Sat Jan 10 16:50:39.190272 2015] [:error] [pid 1869] [client 192.168.1.114:35202] ERR [socket_sendto( /srv/zoneminder/socks/zms-796842s.sock ) failed: No such file or directory], referer: http://192.168.1.14/zm/index.php?view=event&eid=172&filter[terms][0][attr]=MonitorId&filter[terms][0][op]=%3D&filter[terms][0][val]=1&sort_field=StartTime&sort_asc=1&page=1
+* Issue 2: How to enable debugging
+  1. click on the Options link from the main ZoneMinder console view and then go to the Debug tab
+  2. ensure that the ZM_EXTRA_DEBUG setting is switched on.
+** TODO
+   1. How to enable debug statements

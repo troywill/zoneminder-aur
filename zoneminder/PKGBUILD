@@ -10,7 +10,7 @@
 _pkgname=zoneminder
 pkgname=zoneminder
 pkgver=1.28.0
-pkgrel=6
+pkgrel=7
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm armv7h )
 backup=( etc/zm.conf )
