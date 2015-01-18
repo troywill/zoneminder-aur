@@ -10,8 +10,8 @@
 # Orginally based on a Debian Squeeze package
 _pkgname=zoneminder
 pkgname=zoneminder-git
-pkgver=1.28.0.r4145.9.d8df44f
-pkgrel=1
+pkgver=1.28.0
+pkgrel=9
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm armv7h )
 backup=( etc/zm.conf )
