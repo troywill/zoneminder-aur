@@ -621,8 +621,8 @@
      #+NAME: POLKIT_PERMISSIONS_CHUNK     
      #+BEGIN_SRC sh
        # Change Polkit directory permissions to Arch Linux policy
-       chmod 700 $pkgdir/usr/share/polkit-1/rules.d/
-       chown polkitd $pkgdir/usr/share/polkit-1/rules.d/
+       chmod -v 700 $pkgdir/usr/share/polkit-1/rules.d/
+       chown -v polkitd $pkgdir/usr/share/polkit-1/rules.d/
      #+END_SRC
 *** ERROR TABLE
 |      |      | ERROR                                                                                                                    | FIX                                                             |
