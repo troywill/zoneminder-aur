@@ -6,10 +6,11 @@
 # Contributor: Ross melin                <rdmelin@gmail.com>
 # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
 # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+# Contributor: Charles Spence IV         <cspence@unomaha.edu>
 # Orginally based on a Debian Squeeze package
 _pkgname=zoneminder
 pkgname=zoneminder-git
-pkgver=1.28.0.r4140.1.d787ad3
+pkgver=1.28.0.r4145.9.d8df44f
 pkgrel=1
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm armv7h )
@@ -18,11 +19,10 @@ url="https://github.com/ZoneMinder/ZoneMinder/releases"
 license=( GPL )
 depends=(
     apache
-    cambozola
+    ffmpeg
     gnutls
     mariadb
     perl-archive-zip
-    perl-astro-suntime-zoneminder
     perl-date-manip
     perl-dbd-mysql
     perl-dbi
@@ -33,13 +33,12 @@ depends=(
     perl-net-sftp-foreign
     perl-php-serialization
     perl-sys-mmap
-    perl-time-modules
-    perl-x10-zoneminder
     php
     php-apache
     php-gd
     php-mcrypt
     polkit
+    vlc
 )
 makedepends=(
     netpbm
@@ -47,6 +46,10 @@ makedepends=(
 )
 optdepends=(
     netpbm
+    cambozola
+    perl-time-modules
+    perl-x10-zoneminder
+    perl-astro-suntime-zoneminder
 )
 install=$_pkgname.install
      
@@ -70,15 +73,19 @@ pkgver() {
 build() {
     cd $srcdir/$_pkgname
 
+    # ZM_PERL_SUBPREFIX=/lib/perl5 flag added to force Perl modules
+    # to /usr/lib/perl5/ on non i686 architectures
+    
     cmake -DCMAKE_INSTALL_PREFIX=/usr \
-        -DZM_CGIDIR=/srv/http/cgi-bin \
-        -DZM_WEBDIR=/srv/http/zoneminder \
-        -DZM_WEB_USER=http \
-        -DZM_CONTENTDIR=/var/cache/zoneminder \
-        -DZM_LOGDIR=/var/log/zoneminder \
-        -DZM_RUNDIR=/srv/zoneminder \
-        -DZM_TMPDIR=/srv/zoneminder/tmp \
-        -DZM_SOCKDIR=/srv/zoneminder/socks .
+          -DZM_PERL_SUBPREFIX=/lib/perl5 \
+          -DZM_WEBDIR=/srv/http/zoneminder \
+          -DZM_CGIDIR=/srv/http/cgi-bin \
+          -DZM_WEB_USER=http \
+          -DZM_CONTENTDIR=/var/cache/zoneminder \
+          -DZM_LOGDIR=/var/log/zoneminder \
+          -DZM_RUNDIR=/srv/zoneminder \
+          -DZM_TMPDIR=/srv/zoneminder/tmp \
+          -DZM_SOCKDIR=/srv/zoneminder/socks .
     
     make V=0
 }
@@ -88,6 +95,10 @@ package() {
     cd $srcdir/$_pkgname
 
     DESTDIR=$pkgdir make install
+
+    # Change Polkit directory permissions to Arch Linux policy
+    chmod 700 $pkgdir/usr/share/polkit-1/rules.d/
+    chown polkitd $pkgdir/usr/share/polkit-1/rules.d/
 
     # BEGIN CREATE_ZONEMINDER_DIRECTORIES
     mkdir -pv           $pkgdir/var/{cache/zoneminder,log/zoneminder}
@@ -117,7 +128,7 @@ package() {
     chown -h http.http $pkgdir/srv/http/{cgi-bin,$_pkgname,$_pkgname/cgi-bin}
 
     # Link Cambozola
-    ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$_pkgname
+    # ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$_pkgname
 
     # Install configuration files
     mkdir -p                                       $pkgdir/etc/httpd/conf/extra

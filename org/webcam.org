@@ -1,0 +1,161 @@
+* https://wiki.archlinux.org/index.php/Webcam_setup
+  1. lsusb
+     #+BEGIN_SRC sh
+       [troy@kangaroo zoneminder-aur]$ lsusb
+       Bus 002 Device 050: ID 0ac8:3450 Z-Star Microelectronics Corp. 
+     #+END_SRC
+  2. guvcview
+     #+BEGIN_SRC sh
+       pacman --sync guvcview
+     #+END_SRC
+  3. Click “Add New Monitor”
+  4. sudo gpasswd -a http video
+  5. xawtv -c /dev/video0
+** lsmod
+Module                  Size  Used by
+uvcvideo               69760  0 
+videobuf2_vmalloc      12720  1 uvcvideo
+videobuf2_memops       12471  1 videobuf2_vmalloc
+videobuf2_core         43187  1 uvcvideo
+v4l2_common            12867  1 videobuf2_core
+videodev              120318  3 uvcvideo,v4l2_common,videobuf2_core
+media                  17894  2 uvcvideo,videodev
+dccp_diag              12468  0 
+dccp                   84463  1 dccp_diag
+udp_diag               12597  0 
+unix_diag              12473  0 
+af_packet_diag         12481  0 
+netlink_diag           12530  0 
+tcp_diag               12464  0 
+inet_diag              17113  3 tcp_diag,dccp_diag,udp_diag
+ctr                    12807  2 
+ccm                    17326  2 
+joydev                 16847  0 
+mousedev               17096  0 
+dell_wmi               12437  0 
+sparse_keymap          12730  1 dell_wmi
+snd_hda_codec_hdmi     44413  1 
+snd_hda_codec_idt      48112  1 
+snd_hda_codec_generic    57972  1 snd_hda_codec_idt
+arc4                   12480  2 
+brcmsmac              502993  0 
+cordic                 12336  1 brcmsmac
+brcmutil               12941  1 brcmsmac
+b43                   385961  0 
+mac80211              517300  2 b43,brcmsmac
+cfg80211              381789  3 b43,brcmsmac,mac80211
+ssb                    55842  1 b43
+rng_core               12704  1 b43
+pcmcia                 48341  2 b43,ssb
+pcmcia_core            18055  1 pcmcia
+ppdev                  16686  0 
+iTCO_wdt               12727  0 
+iTCO_vendor_support    12585  1 iTCO_wdt
+coretemp               12708  0 
+hwmon                  12818  1 coretemp
+intel_powerclamp       16978  0 
+kvm_intel             133480  0 
+kvm                   359938  1 kvm_intel
+crc32_pclmul           12809  0 
+crc32c_intel           12659  0 
+aesni_intel            17934  4 
+aes_i586               16647  1 aesni_intel
+xts                    12583  1 aesni_intel
+dell_laptop            12817  0 
+rfkill                 18387  3 cfg80211,dell_laptop
+lrw                    12645  1 aesni_intel
+gf128mul               12834  2 lrw,xts
+ablk_helper            12508  1 aesni_intel
+cryptd                 18169  1 ablk_helper
+dcdbas                 13087  1 dell_laptop
+evdev                  17136  15 
+mac_hid                12569  0 
+psmouse               106236  0 
+pcspkr                 12531  0 
+serio_raw              12737  0 
+i915                  810084  9 
+bcma                   40963  3 b43,brcmsmac
+wmi                    17147  1 dell_wmi
+parport_pc             26047  0 
+tpm_tis                17022  0 
+parport                35213  2 ppdev,parport_pc
+tpm                    30939  1 tpm_tis
+snd_hda_intel          26011  3 
+drm_kms_helper         71440  1 i915
+snd_hda_controller     26498  1 snd_hda_intel
+dell_smo8800           12654  0 
+e1000e                192094  0 
+snd_hda_codec          93737  5 snd_hda_codec_hdmi,snd_hda_codec_idt,snd_hda_codec_generic,snd_hda_intel,snd_hda_controller
+drm                   212597  6 i915,drm_kms_helper
+snd_hwdep              12906  1 snd_hda_codec
+video                  17718  1 i915
+i2c_i801               16845  0 
+snd_pcm                73796  4 snd_hda_codec_hdmi,snd_hda_codec,snd_hda_intel,snd_hda_controller
+ac                     12627  0 
+ptp                    17462  1 e1000e
+i2c_algo_bit           12640  1 i915
+intel_ips              17205  0 
+intel_agp              17232  0 
+snd_timer              26106  1 snd_pcm
+intel_gtt              17584  3 i915,intel_agp
+snd                    55101  14 snd_hwdep,snd_timer,snd_hda_codec_hdmi,snd_hda_codec_idt,snd_pcm,snd_hda_codec_generic,snd_hda_codec,snd_hda_intel
+agpgart                31256  3 drm,intel_agp,intel_gtt
+pps_core               17080  1 ptp
+shpchp                 30666  0 
+battery                13164  0 
+button                 12833  1 i915
+i2c_core               41134  7 drm,i915,i2c_i801,drm_kms_helper,i2c_algo_bit,v4l2_common,videodev
+soundcore              12895  2 snd,snd_hda_codec
+lpc_ich                16616  0 
+acpi_cpufreq           17050  1 
+processor              27273  1 acpi_cpufreq
+sch_fq_codel           17151  5 
+ext4                  458412  1 
+crc16                  12327  1 ext4
+mbcache                17027  1 ext4
+jbd2                   80994  1 ext4
+sd_mod                 43718  2 
+crc_t10dif             12399  1 sd_mod
+crct10dif_common       12340  1 crc_t10dif
+atkbd                  21926  0 
+libps2                 12643  2 atkbd,psmouse
+ahci                   29099  1 
+libahci                26670  1 ahci
+libata                161789  2 ahci,libahci
+firewire_ohci          34642  0 
+scsi_mod              128181  2 libata,sd_mod
+firewire_core          55236  1 firewire_ohci
+crc_itu_t              12331  1 firewire_core
+ehci_pci               12464  0 
+sdhci_pci              17695  0 
+sdhci                  34539  1 sdhci_pci
+ehci_hcd               65019  1 ehci_pci
+led_class              12747  4 b43,sdhci,brcmsmac,dell_laptop
+mmc_core               95876  4 b43,ssb,sdhci,sdhci_pci
+usbcore               170981  3 uvcvideo,ehci_hcd,ehci_pci
+usb_common             12484  1 usbcore
+i8042                  17690  2 libps2,dell_laptop
+serio                  17914  6 serio_raw,atkbd,i8042,psmouse
+
+** dmesg | tail
+[180020.456152] video LNXVIDEO:01: Restoring backlight state
+[180021.385193] acpi PNP0401:00: Already enumerated
+[180021.455597] acpi PNP0501:01: Still not present
+[180024.419866] cfg80211: Calling CRDA to update world regulatory domain
+[180024.643142] wlp2s0: authenticate with 00:14:bf:c2:f3:52
+[180024.652959] wlp2s0: send auth to 00:14:bf:c2:f3:52 (try 1/3)
+[180024.654453] wlp2s0: authenticated
+[180024.655393] wlp2s0: associate with 00:14:bf:c2:f3:52 (try 1/3)
+[180024.658104] wlp2s0: RX AssocResp from 00:14:bf:c2:f3:52 (capab=0x431 status=0 aid=7)
+[180024.658855] brcmsmac bcma0:0: brcmsmac: brcms_ops_bss_info_changed: associated
+[180024.658865] brcmsmac bcma0:0: brcms_ops_bss_info_changed: qos enabled: true (implement)
+[180024.658872] wlp2s0: associated
+[180024.677803] brcmsmac bcma0:0: wl0: brcms_c_d11hdrs_mac80211: \xffffff80v\xffffffa5\xfffffff4 txop exceeded phylen 137/256 dur 1602/1504
+[180030.276825] brcmsmac bcma0:0: brcms_ops_bss_info_changed: arp filtering: 1 addresses (implement)
+[180042.430225] usb 2-1.2: new high-speed USB device number 50 using ehci-pci
+[180042.531508] uvcvideo: Found UVC 1.00 device Vimicro USB Camera (Altair) (0ac8:3450)
+[180042.533894] input: Vimicro USB Camera (Altair) as /devices/pci0000:00/0000:00:1d.0/usb2/2-1/2-1.2/2-1.2:1.0/input/input19
+[180202.259665] usb 2-1.2: USB disconnect, device number 50
+[180209.102614] usb 2-1.2: new high-speed USB device number 51 using ehci-pci
+[180209.204528] uvcvideo: Found UVC 1.00 device Vimicro USB Camera (Altair) (0ac8:3450)
+[180209.207205] input: Vimicro USB Camera (Altair) as /devices/pci0000:00/0000:00:1d.0/usb2/2-1/2-1.2/2-1.2:1.0/input/input20

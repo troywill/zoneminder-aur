@@ -92,6 +92,7 @@
      # Contributor: Ross melin                <rdmelin@gmail.com>
      # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
      # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+     # Contributor: Charles Spence IV         <cspence@unomaha.edu>
      # Orginally based on a Debian Squeeze package
    #+END_SRC
 ** pkgver-git
@@ -109,7 +110,7 @@
      _pkgname=zoneminder
      pkgname=zoneminder
      pkgver=1.28.0
-     pkgrel=7
+     pkgrel=9
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -119,7 +120,7 @@
      _pkgname=zoneminder
      pkgname=zoneminder-git
      pkgver=1.28.0
-     pkgrel=1
+     pkgrel=9
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -133,11 +134,10 @@
    #+BEGIN_SRC sh
      depends=(
          apache
-         cambozola
+         ffmpeg
          gnutls
          mariadb
          perl-archive-zip
-         perl-astro-suntime-zoneminder
          perl-date-manip
          perl-dbd-mysql
          perl-dbi
@@ -148,13 +148,12 @@
          perl-net-sftp-foreign
          perl-php-serialization
          perl-sys-mmap
-         perl-time-modules
-         perl-x10-zoneminder
          php
          php-apache
          php-gd
          php-mcrypt
          polkit
+         vlc
      )
      makedepends=(
          netpbm
@@ -162,6 +161,10 @@
      )
      optdepends=(
          netpbm
+         cambozola
+         perl-time-modules
+         perl-x10-zoneminder
+         perl-astro-suntime-zoneminder
      )
    #+END_SRC
 ** SOURCES
@@ -459,20 +462,49 @@
 *** CMAKE_CHUNK
    #+NAME: CMAKE_CHUNK
    #+BEGIN_SRC sh
+     # ZM_PERL_SUBPREFIX=/lib/perl5 flag added to force Perl modules
+     # to /usr/lib/perl5/ on non i686 architectures
+
      cmake -DCMAKE_INSTALL_PREFIX=/usr \
-         -DZM_WEBDIR=/srv/http/zoneminder \
-         -DZM_CGIDIR=/srv/http/cgi-bin \
-         -DZM_WEB_USER=http \
-         -DZM_CONTENTDIR=/var/cache/zoneminder \
-         -DZM_LOGDIR=/var/log/zoneminder \
-         -DZM_RUNDIR=/srv/zoneminder \
-         -DZM_TMPDIR=/srv/zoneminder/tmp \
-         -DZM_SOCKDIR=/srv/zoneminder/socks .
+           -DZM_PERL_SUBPREFIX=/lib/perl5 \
+           -DZM_WEBDIR=/srv/http/zoneminder \
+           -DZM_CGIDIR=/srv/http/cgi-bin \
+           -DZM_WEB_USER=http \
+           -DZM_CONTENTDIR=/var/cache/zoneminder \
+           -DZM_LOGDIR=/var/log/zoneminder \
+           -DZM_RUNDIR=/srv/zoneminder \
+           -DZM_TMPDIR=/srv/zoneminder/tmp \
+           -DZM_SOCKDIR=/srv/zoneminder/socks .
 
      make V=0
    #+END_SRC
 
 ** PACKAGE
+*** PACKAGE-GIT chunk
+    #+NAME: PACKAGE-GIT
+    #+BEGIN_SRC sh
+      package() {
+
+          cd $srcdir/$_pkgname
+
+          DESTDIR=$pkgdir make install
+
+          <<POLKIT_PERMISSIONS_CHUNK>>
+
+          <<CREATE_ZONEMINDER_DIRECTORIES>>
+
+          <<CREATE_AND_LINK_CONTENT_FOLDERS>>
+
+          <<CREATE_CGI_BIN_LINK>>
+
+          <<CHANGE_OWNER_AND_GROUP>>
+
+          <<LINK_CAMBOZOLA>>
+
+          <<INSTALL_CONF_FILES>>
+
+      }
+    #+END_SRC
 *** PACKAGE chunk
     #+NAME: PACKAGE
     #+BEGIN_SRC sh
@@ -481,6 +513,8 @@
           cd $srcdir/ZoneMinder-$pkgver
 
           DESTDIR=$pkgdir make install
+
+          <<POLKIT_PERMISSIONS_CHUNK>>
 
           <<CREATE_ZONEMINDER_DIRECTORIES>>
 
@@ -568,7 +602,7 @@
      #+NAME: LINK_CAMBOZOLA
      #+BEGIN_SRC sh
        # Link Cambozola
-       ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$_pkgname
+       # ln -s /usr/share/cambozola/cambozola.jar $pkgdir/srv/http/$_pkgname
      #+END_SRC
 **** INSTALL_CONF_FILES chunk
      #+NAME: INSTALL_CONF_FILES
@@ -583,29 +617,13 @@
        install -D -m 644 COPYING     $pkgdir/usr/share/license/$_pkgname
        install -D -m 644 db/zm*.sql  $pkgdir/usr/share/$_pkgname/db     
      #+END_SRC
-*** PACKAGE-GIT chunk
-    #+NAME: PACKAGE-GIT
-    #+BEGIN_SRC sh
-      package() {
-
-          cd $srcdir/$_pkgname
-
-          DESTDIR=$pkgdir make install
-
-          <<CREATE_ZONEMINDER_DIRECTORIES>>
-
-          <<CREATE_AND_LINK_CONTENT_FOLDERS>>
-
-          <<CREATE_CGI_BIN_LINK>>
-
-          <<CHANGE_OWNER_AND_GROUP>>
-
-          <<LINK_CAMBOZOLA>>
-
-          <<INSTALL_CONF_FILES>>
-
-      }
-    #+END_SRC
+**** POLKIT_PERMISSIONS_CHUNK
+     #+NAME: POLKIT_PERMISSIONS_CHUNK     
+     #+BEGIN_SRC sh
+       # Change Polkit directory permissions to Arch Linux policy
+       chmod 700 $pkgdir/usr/share/polkit-1/rules.d/
+       chown polkitd $pkgdir/usr/share/polkit-1/rules.d/
+     #+END_SRC
 *** ERROR TABLE
 |      |      | ERROR                                                                                                                    | FIX                                                             |
 |------+------+--------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------|
@@ -664,13 +682,28 @@
       \|^;extension=gd.so$|        s|^;||;
       \|^;extension=gettext.so$|   s|^;||;
       \|^;extension=mcrypt.so$|    s|^;||;
-      \|^;extension=session.so$|   s|^;||;
       \|^;extension=sockets.so$|   s|^;||;
       \|^;extension=openssl.so$|   s|^;||;
       \|^;extension=ftp.so$|       s|^;||;
       \|^;extension=zip.so$|       s|^;||;
 
       # Add zoneminder paths to open_basedir
-      s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks|;
+      s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks:/var/log/zoneminder|;
     #+END_SRC
 * perl-astro-suntime-zoneminder
+* Changelog
+*** Wednesday, January 14, 2015
+    -DZM_PERL_SUBPREFIX=/lib/perl5 with help of Charles Spence IV to force Perl modules
+     # to /usr/lib/perl5/ on non i686 architectures
+I noticed that while installing the package with pacman, a couple warnings appear:
+
+warning: directory permissions differ on /usr/share/polkit-1/rules.d/
+filesystem: 700 package: 755
+warning: directory ownership differs on /usr/share/polkit-1/rules.d/
+filesystem: 102:0 package: 0:0
+
+These warnings can be fixed by including these three lines on the end of the package() section:
+
+# Fixing permissions
+chmod 700 $pkgdir/usr/share/polkit-1/rules.d/
+chown polkitd $pkgdir/usr/share/polkit-1/rules.d/

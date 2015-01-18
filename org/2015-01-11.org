@@ -1,0 +1,438 @@
+* Install from source
+  1. [X] mkdir SOURCE
+  2. [X] cd SOURCE && tar -xvf ../zoneminder/v1.28.0.tar.gz
+  3. [X] tdw_build.sh file:./SOURCE/ZoneMinder-1.28.0/
+     #+BEGIN_SRC sh :tangle SOURCE/ZoneMinder-1.28.0/tdw_build.sh :shebang #!/bin/bash
+       cmake -DCMAKE_BUILD_TYPE=Debug \
+             -DCMAKE_INSTALL_PREFIX=/usr \
+             -DZM_WEB_USER=http \
+             -DZM_WEBDIR=/srv/http/ \
+             -DZM_CGIDIR=/srv/http/cgi-bin \
+             -DZM_CONTENTDIR=/zoneminder/cache \
+             -DZM_LOGDIR=/zoneminder/log \
+             -DZM_RUNDIR=/zoneminder/run \
+             -DZM_TMPDIR=/zoneminder/tmp \
+             -DZM_SOCKDIR=/zoneminder/socks .
+       make V=0
+     #+END_SRC
+  4. [ ] INSTALL
+     #+BEGIN_SRC sh
+       Possible configuration options: 
+               ZM_RUNDIR               Location of transient process files, default: /var/run/zm
+               ZM_TMPDIR               Location of temporary files, default: /tmp/zm
+               ZM_LOGDIR               Location of generated log files, default: /var/log/zm
+               ZM_WEBDIR               Location of the web files, default: <prefix>/share/zoneminder/www
+               ZM_CGIDIR               Location of the cgi-bin files, default: <prefix>/libexec/zoneminder/cgi-bin
+               ZM_CONTENTDIR           Location of dynamic content (events and images), default: /var/lib/zoneminder
+               ZM_DB_HOST              Hostname where ZoneMinder database located, default: localhost
+               ZM_DB_NAME              Name of ZoneMinder database, default: zm
+               ZM_DB_USER              Name of ZoneMinder database user, default: zmuser
+               ZM_DB_PASS              Password of ZoneMinder database user, default: zmpass
+               ZM_WEB_USER             The user apache or the local web server runs on. Leave empty for automatic detection. If that fails, you can use this variable to force
+               ZM_WEB_GROUP            The group apache or the local web server runs on, Leave empty to be the same as the web user
+       Advanced:
+               ZM_EXTRA_LIBS           A list of optional libraries, separated by semicolons, e.g. ssl;theora
+               ZM_MYSQL_ENGINE         MySQL engine to use with database, default: InnoDB
+               ZM_NO_MMAP              Set to ON to not use mmap shared memory. Shouldn't be enabled unless you experience problems with the shared memory. default: OFF
+               ZM_NO_FFMPEG            Set to ON to skip ffmpeg checks and force building ZM without ffmpeg. default: OFF
+               ZM_NO_X10               Set to ON to build ZoneMinder without X10 support. default: OFF
+               ZM_PERL_SUBPREFIX       Use a different directory for the zm perl modules. NOTE: This is a subprefix, e.g. lib will be turned into <prefix>/lib, default: <libarch>/perl5
+               ZM_PERL_USE_PATH        Override the include path for zm perl modules. Useful if you are moving the perl modules without using the ZM_PERL_SUBPREFIX option. default: <prefix>/<zmperlsubprefix>
+
+
+       Useful configuration options provided by cmake:
+       CMAKE_VERBOSE_MAKEFILE - Set this to ON (default OFF) to see what cmake is doing. Very useful for troubleshooting.
+       CMAKE_BUILD_TYPE - Set this to Debug (default Release) to build ZoneMinder with debugging enabled.
+       CMAKE_INSTALL_PREFIX - Use this to change the prefix (default /usr/local). This option behaves like --prefix from autoconf. Package maintainers will probably want to set this to "/usr".
+
+       Useful environment variables provided by cmake:
+       CMAKE_INCLUDE_PATH - Use this to add to the include search path.
+       CMAKE_LIBRARY_PATH - Use this to add to the library search path.
+       CMAKE_PREFIX_PATH - Use this to add to both include and library search paths. <path>/include will be added to the include search path and <path>/lib to the library search path. Multiple paths can be specified, separated by a : character. For example: export CMAKE_PREFIX_PATH="/opt/libjpeg-turbo:/opt/ffmpeg-from-git"
+
+       CFLAGS, CPPFLAGS and other environment variables:
+       To append to the CFLAGS and CXXFLAGS, please use the CFLAGS and CXXFLAGS environment variables.
+       Or use the CMAKE_C_FLAGS and CMAKE_CXX_FLAGS configuration options.
+       To replace the CFLAGS and CXXFLAGS entirely:
+       ,*   For the Release build type: use CMAKE_C_FLAGS_RELEASE for the CFLAGS and CMAKE_CXX_FLAGS_RELEASE for the CXXFLAGS
+       ,*   For the Debug build type: use CMAKE_C_FLAGS_DEBUG for the CFLAGS and CMAKE_CXX_FLAGS_DEBUG for the CXXFLAGS
+       Other important environment variables (such as LDFLAGS) are also supported.
+
+       The DESTDIR environment variable is also supported, however it needs to be set before invoking make install. For example: DESTDIR=mydestdir make install
+       For more information about DESTDIR, see:
+       ,*   http://www.gnu.org/prep/standards/html_node/DESTDIR.html
+
+       Basic steps for installing ZoneMinder on a fresh system
+       -------------------------------------------------------
+       1) After installing all the required dependencies, in the project directory, run "cmake [extra options] ."
+       This behaves like ./configure. It is also possible to supply configuration options, e.g. cmake -DZM_DB_PASS="mypass" .
+       2) Run "make" to compile ZoneMinder
+       3) Run "make install" (as root, or use sudo) to install ZoneMinder to your system.
+       4) Create a directory for the content and the necessary symlinks by running zmlinkcontent.sh with the directory you want to use. e.g. ./zmlinkcontent.sh /nfs/zm
+       5) Create a database for zoneminder, called "zm".
+       6) Create a user for the zoneminder database, called zmuser with password and full privileges to the "zm" database.
+       NOTE: The database server, database name, user and password can be different and adjusted during configuration step with the options in this file, or by editing /etc/zm.conf
+       7) Populate the zoneminder database using the script zm_create.sql. This should be found in <prefix>/share/zoneminder/db or in the project/db directory.
+
+       8) Create an apache virtual host for ZoneMinder. Make sure to use the same paths as ZM_WEBDIR and ZM_CGIDIR in /etc/zm.conf
+       9) Create other config if desired (e.g. rsyslog, logrotate and such). Some of this can be found in <prefix>/share/zoneminder/misc or project/misc directory
+       10) Setup an init script for your system. Its also possible to use "zmpkg.pl start" and "zmpkg.pl stop" if you can't find a one.
+
+       Basic steps for upgrading ZoneMinder
+       ------------------------------------
+       1) If you wish to use the same paths and configuration as the currently installed ZoneMinder, you need to provide cmake with options that match your current installation.
+       You can provide those options in the command line to cmake, e.g. cmake -DZM_DB_PASS="blah" -DZM_WEBDIR="/usr/local/share/zoneminder/www" -DCMAKE_INSTALL_FULL_BINDIR="/usr/bin" .
+       Or alternatively, for convenience, use the cmakecacheimport.sh script. This reads a zoneminder configuration file (zm.conf) and creates a cmake initial cache file called zm_conf.cmake, which you can then provide to cmake.
+       For example:
+       ./cmakecacheimport.sh /etc/zm.conf
+       cmake -C zm_conf.cmake [extra options] .
+
+       2) Run "make" to compile ZoneMinder
+       3) Run "make install" (as root, or use sudo) to install ZoneMinder to your system.
+       4) Depending on your configuration: If the DIR_EVENTS and DIR_IMAGES options are set to default (pointing to web directory/events and web directory/images), You will need to update the symlinks in the web directory to the correct folders. e.g. web directory/events should point to the real events directory, and likewise for the images directory.
+       You can use the zmlinkcontent.sh script for this. For example, if /var/lib/zoneminder is the folder that contains the "images" and "events" directories, you can use:
+       ./zmlinkcontent.sh /var/lib/zoneminder
+       By default, the content directory for new installations is /var/lib/zoneminder. This can be overridden in cmake with the ZM_CONTENTDIR option. e.g. cmake -DZM_CONTENTDIR="/some/big/storage/zm" .
+
+       5) Run zmupdate.pl to update the database layout to the new version.
+
+       Uninstallation:
+       ---------------
+       By default, cmake does not have an uninstall target, however we have added a one. Simply run make uninstall (or DESTDIR=mydestdir make uninstall if a DESTDIR was used) and it will remove all the files that cmake installed.
+       It's also possible to do this manually. The file install_manifest.txt contains the list of files installed to the system. This can be used in many ways to delete all files installed by cmake, such as: xargs rm < install_manifest.txt
+
+       Contributions:
+       --------------
+       Please visit our GitHub at http://github.com/ZoneMinder/ZoneMinder
+
+
+            
+     #+END_SRC
+  5. [ ] tdw_install.sh file:./SOURCE/ZoneMinder-1.28.0/
+     #+BEGIN_SRC sh :tangle SOURCE/ZoneMinder-1.28.0/tdw_install.sh :shebang #!/bin/bash
+       echo "Run as root"
+       make install
+       mkdir -p /zoneminder
+       find /srv -type f -cmin -1 > srv.installed
+       find /usr -type f -cmin -1 > usr.installed
+       find /zoneminder -type f -cmin -1 > zoneminder.installed
+       find /var -type f -cmin -1 > var.installed
+       find /srv -type f -cmin -1 > var.installed
+     #+END_SRC
+  6. usr.installed
+     #+BEGIN_SRC sh
+       /usr/bin/zmdc.pl
+       /usr/bin/zmtrack.pl
+       /usr/bin/zmu
+       /usr/bin/zmstreamer
+       /usr/bin/zmsystemctl.pl
+       /usr/bin/zmc
+       /usr/bin/zmcontrol.pl
+       /usr/bin/zmpkg.pl
+       /usr/bin/zmwatch.pl
+       /usr/bin/zmf
+       /usr/bin/zmx10.pl
+       /usr/bin/zmupdate.pl
+       /usr/bin/zmfilter.pl
+       /usr/bin/zmcamtool.pl
+       /usr/bin/zmaudit.pl
+       /usr/bin/zmtrigger.pl
+       /usr/bin/zmvideo.pl
+       /usr/bin/zma
+       /usr/lib/perl5/i686-linux-thread-multi/auto/ZoneMinder/.packlist
+       /usr/lib/perl5/ZoneMinder/General.pm
+       /usr/lib/perl5/ZoneMinder/Control/LoftekSentinel.pm
+       /usr/lib/perl5/ZoneMinder/Control/mjpgStreamer.pm
+       /usr/lib/perl5/ZoneMinder/Control/M8640.pm
+       /usr/lib/perl5/ZoneMinder/Control/Ncs370.pm
+       /usr/lib/perl5/ZoneMinder/Control/AxisV2.pm
+       /usr/lib/perl5/ZoneMinder/Control/PanasonicIP.pm
+       /usr/lib/perl5/ZoneMinder/Control/FI8620_Y2k.pm
+       /usr/lib/perl5/ZoneMinder/Control/FI8608W_Y2k.pm
+       /usr/lib/perl5/ZoneMinder/Control/FI8908W.pm
+       /usr/lib/perl5/ZoneMinder/Control/Wanscam.pm
+       /usr/lib/perl5/ZoneMinder/Control/SkyIPCam7xx.pm
+       /usr/lib/perl5/ZoneMinder/Control/PelcoD.pm
+       /usr/lib/perl5/ZoneMinder/Control/PelcoP.pm
+       /usr/lib/perl5/ZoneMinder/Control/Toshiba_IK_WB11A.pm
+       /usr/lib/perl5/ZoneMinder/Control/FI9821W_Y2k.pm
+       /usr/lib/perl5/ZoneMinder/Control/Visca.pm
+       /usr/lib/perl5/ZoneMinder/Control.pm
+       /usr/lib/perl5/ZoneMinder/Memory/Shared.pm
+       /usr/lib/perl5/ZoneMinder/Memory/Mapped.pm
+       /usr/lib/perl5/ZoneMinder/Config.pm
+       /usr/lib/perl5/ZoneMinder/ConfigData.pm
+       /usr/lib/perl5/ZoneMinder/ConfigAdmin.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Connection.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Channel.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Connection/Example.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Channel/Handle.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Channel/File.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Channel/Unix.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Channel/Inet.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Channel/Spawning.pm
+       /usr/lib/perl5/ZoneMinder/Trigger/Channel/Serial.pm
+       /usr/lib/perl5/ZoneMinder/Logger.pm
+       /usr/lib/perl5/ZoneMinder/Database.pm
+       /usr/lib/perl5/ZoneMinder/Memory.pm
+       /usr/lib/perl5/ZoneMinder/Base.pm
+       /usr/lib/perl5/ZoneMinder.pm
+       /usr/share/man/man3/ZoneMinder::ConfigAdmin.3pm
+       /usr/share/man/man3/ZoneMinder.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Connection.3pm
+       /usr/share/man/man3/ZoneMinder::Control::FI8608W_Y2k.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Connection::Example.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Channel::Serial.3pm
+       /usr/share/man/man3/ZoneMinder::Database.3pm
+       /usr/share/man/man3/ZoneMinder::Control::M8640.3pm
+       /usr/share/man/man3/ZoneMinder::Control::FI9821W_Y2k.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Channel::Handle.3pm
+       /usr/share/man/man3/ZoneMinder::Config.3pm
+       /usr/share/man/man3/ZoneMinder::Control::AxisV2.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Channel::Spawning.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Channel.3pm
+       /usr/share/man/man3/ZoneMinder::Control::PelcoP.3pm
+       /usr/share/man/man3/ZoneMinder::Base.3pm
+       /usr/share/man/man3/ZoneMinder::Control::Wanscam.3pm
+       /usr/share/man/man3/ZoneMinder::ConfigData.3pm
+       /usr/share/man/man3/ZoneMinder::Control.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Channel::Inet.3pm
+       /usr/share/man/man3/ZoneMinder::Control::mjpgStreamer.3pm
+       /usr/share/man/man3/ZoneMinder::Control::PelcoD.3pm
+       /usr/share/man/man3/ZoneMinder::Control::Toshiba_IK_WB11A.3pm
+       /usr/share/man/man3/ZoneMinder::Logger.3pm
+       /usr/share/man/man3/ZoneMinder::Control::PanasonicIP.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Channel::File.3pm
+       /usr/share/man/man3/ZoneMinder::Control::Visca.3pm
+       /usr/share/man/man3/ZoneMinder::Control::FI8908W.3pm
+       /usr/share/man/man3/ZoneMinder::Trigger::Channel::Unix.3pm
+       /usr/share/man/man3/ZoneMinder::Control::SkyIPCam7xx.3pm
+       /usr/share/man/man3/ZoneMinder::Memory.3pm
+       /usr/share/man/man3/ZoneMinder::General.3pm
+       /usr/share/man/man3/ZoneMinder::Control::FI8620_Y2k.3pm
+       /usr/share/man/man3/ZoneMinder::Control::Ncs370.3pm
+       /usr/share/polkit-1/actions/com.zoneminder.systemctl.policy
+       /usr/share/polkit-1/rules.d/com.zoneminder.systemctl.rules
+       /usr/share/zoneminder/db/zm_update-1.24.3.sql
+       /usr/share/zoneminder/db/zm_update-1.18.0.sql
+       /usr/share/zoneminder/db/zm_update-1.19.2.sql
+       /usr/share/zoneminder/db/zm_update-1.21.3.sql
+       /usr/share/zoneminder/db/zm_update-1.23.2.sql
+       /usr/share/zoneminder/db/zm_update-0.9.16.sql
+       /usr/share/zoneminder/db/zm_update-0.9.15.sql
+       /usr/share/zoneminder/db/zm_update-0.9.12.sql
+       /usr/share/zoneminder/db/zm_update-1.19.1.sql
+       /usr/share/zoneminder/db/zm_update-1.21.4.sql
+       /usr/share/zoneminder/db/zm_update-1.27.99.0.sql
+       /usr/share/zoneminder/db/zm_update-1.26.0.sql
+       /usr/share/zoneminder/db/zm_update-0.9.7.sql
+       /usr/share/zoneminder/db/zm_update-1.19.3.sql
+       /usr/share/zoneminder/db/zm_update-1.22.1.sql
+       /usr/share/zoneminder/db/zm_update-1.26.1.sql
+       /usr/share/zoneminder/db/zm_update-1.19.5.sql
+       /usr/share/zoneminder/db/zm_update-1.22.3.sql
+       /usr/share/zoneminder/db/zm_update-1.24.1.sql
+       /usr/share/zoneminder/db/zm_update-1.23.3.sql
+       /usr/share/zoneminder/db/zm_update-1.27.0.sql
+       /usr/share/zoneminder/db/zm_update-0.9.11.sql
+       /usr/share/zoneminder/db/zm_update-0.9.9.sql
+       /usr/share/zoneminder/db/zm_update-1.18.1.sql
+       /usr/share/zoneminder/db/zm_update-1.17.1.sql
+       /usr/share/zoneminder/db/zm_update-1.21.2.sql
+       /usr/share/zoneminder/db/zm_update-1.28.0.sql
+       /usr/share/zoneminder/db/zm_update-1.23.0.sql
+       /usr/share/zoneminder/db/zm_update-1.26.2.sql
+       /usr/share/zoneminder/db/zm_update-1.22.2.sql
+       /usr/share/zoneminder/db/zm_update-0.0.1.sql
+       /usr/share/zoneminder/db/zm_create.sql
+       /usr/share/zoneminder/db/zm_update-0.9.13.sql
+       /usr/share/zoneminder/db/zm_update-1.21.0.sql
+       /usr/share/zoneminder/db/zm_update-1.17.2.sql
+       /usr/share/zoneminder/db/zm_update-1.21.1.sql
+       /usr/share/zoneminder/db/zm_update-1.19.0.sql
+       /usr/share/zoneminder/db/zm_update-1.23.1.sql
+       /usr/share/zoneminder/db/zm_update-1.26.3.sql
+       /usr/share/zoneminder/db/zm_update-1.20.0.sql
+       /usr/share/zoneminder/db/zm_update-0.9.8.sql
+       /usr/share/zoneminder/db/zm_update-1.24.0.sql
+       /usr/share/zoneminder/db/zm_update-1.19.4.sql
+       /usr/share/zoneminder/db/zm_update-1.26.5.sql
+       /usr/share/zoneminder/db/zm_update-1.20.1.sql
+       /usr/share/zoneminder/db/zm_update-0.9.10.sql
+       /usr/share/zoneminder/db/zm_update-1.24.4.sql
+       /usr/share/zoneminder/db/zm_update-1.24.2.sql
+       /usr/share/zoneminder/db/zm_update-1.22.0.sql
+     #+END_SRC
+  7. [X] run_zmlinkcontent.sh file:./SOURCE/ZoneMinder-1.28.0/run_zmlinkcontent.sh
+     #+BEGIN_SRC sh :tangle SOURCE/ZoneMinder-1.28.0/run_zmlinkcontent.sh :shebang #!/bin/bash
+       sudo mkdir /zoneminder
+       sudo ./zmlinkcontent.sh
+     #+END_SRC
+  8. [ ] Create zm database
+  9. [X] Configure Apache file:/etc/httpd/conf/httpd.conf file:./zoneminder-aur.org
+     1. [X] Enable CGI
+	LoadModule cgi_module modules/mod_cgi.so$| s|#||;
+     2. [X] Enable PHP
+	1. [X] Use mod_mpm_prefork
+	   1. [X] Comment out LoadModule mpm_event_module modules/mod_mpm_event.so
+	   2. [X] Add LoadModule mpm_prefork_module modules/mod_mpm_prefork.so after previous line
+	2. [X] Enable Lib PHP
+	   1. [X] Go to LoadModule rewrite_module modules/mod_rewrite.so
+	   2. [X] Add LoadModule php5_module modules/libphp5.so
+	   3. [X] Go to Include conf/extra/httpd-default.conf
+  10. [ ] Configure PHP file:/etc/php/php.ini
+      1. [ ] Open basedir
+	 #+BEGIN_SRC conf
+           open_basedir = /srv/http/:/home/:/tmp/:/srv/http/cgi-bin:/zoneminder/cache:/zoneminder/log:/zoneminder/run:/zoneminder/tmp:/zoneminder/socks         
+	 #+END_SRC
+	       open_basedir = /srv/http/:/home/:/tmp/:/etc:/srv/http/:/zoneminder/cache/:/zoneminder/socks NOW
+      2. [ ] Modules
+	 # Enable these libraries by removing the leading comment character
+	 \|^;extension=ftp.so$|       s|^;||;
+	 \|^;extension=gd.so$|        s|^;||;
+	 \|^;extension=gettext.so$|   s|^;||;
+	 \|^;extension=mcrypt.so$|    s|^;||;
+	 \|^;extension=openssl.so$|   s|^;||;
+	 \|^;extension=pdo_mysql.so$| s|^;||;
+	 \|^;extension=session.so$|   s|^;||;
+	 \|^;extension=sockets.so$|   s|^;||;
+	 \|^;extension=zip.so$|       s|^;||;
+      3. [ ] date
+  11. [ ] Restart Apache
+      #+BEGIN_SRC sh
+        sudo systemctl restart httpd
+      #+END_SRC
+  12. [ ] Edit file:/usr/bin/zmpkg.pl to enable running without a service file
+      Change !calledBysystem() to calledBysystem()
+      #+BEGIN_SRC perl
+      	if ( systemdRunning() && calledBysystem() ) {
+      #+END_SRC
+  13. [ ] sudo zmpkg.pl start
+  14. [ ] short_open_tag = On in /etc/php/php.ini
+  15. [ ] sudo systemctl restart httpd
+  16. [ ] Getting errors, so edit file:/etc/httpd/conf/httpd.conf per http://www.zoneminder.com/wiki/index.php/Fedora
+      1. [ ] Change
+	 #+BEGIN_SRC conf
+           <Directory />
+               AllowOverride none
+               Require all denied
+           </Directory>
+	 #+END_SRC
+	 to
+	 #+BEGIN_SRC conf
+           <Directory />
+               AllowOverride All
+               Require all granted
+           </Directory>
+	 #+END_SRC
+      2. Still errors, make more changes
+      3. Many errors like => Jan 11 20:16:21 kangaroo zms[3497]: ERR [Can't open /zoneminder/tmp/zmswap-m1/zmswap-q345151/zmswap-i00933.jpg: No such file or directory]
+      4. Lastly, try php_value short_open_tag 1
+      5. What happens if I comment out ScriptAlias line?
+  17. [ ] Patch file:./SOURCE/ZoneMinder-1.28.0/src/zm_image.cpp
+      #+BEGIN_SRC c++
+        // Error( "Can't open %s: %s", filename, strerror(errno) );
+        Error( "Can't open %s for writing: %s", filename, strerror(errno) );
+      #+END_SRC
+  17. [ ] Patch file:./SOURCE/ZoneMinder-1.28.0/src/zm_monitor.cpp
+      #+BEGIN_SRC c++
+        Info("zm_monitor.cpp/void MonitorStream::runStream(): if ( checkSwapPath( swap_path, false ) )");
+        if ( checkSwapPath( swap_path, false ) )
+          monitor->image_buffer[index].image->WriteJpeg( temp_image_buffer[temp_index].file_name, config.jpeg_file_quality )
+      #+END_SRC
+** GO TO BED!
+   1. shmmax
+      #+BEGIN_SRC sh
+        echo 536870912 > /proc/sys/kernel/shmmax
+        adduser html video
+      #+END_SRC
+      
+* Error Logs
+  1. Reload Event 15 at Sun Jan 11 19:26:06 PST 2015
+  2. Access
+     #+BEGIN_SRC conf
+       [11/Jan/2015:19:26:19 -0800] "GET /?view=event&eid=15&filter[terms][0][attr]=MonitorId&filter[terms][0][op]=%3D&filter[terms][0][val]=1&sort_field=StartTime&sort_asc=1&page=1 HTTP/1.1" 200 11617
+       [11/Jan/2015:19:26:19 -0800] "GET /css/reset.css HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /css/overlay.css HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /skins/classic/css/skin.css HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /js/logger.js HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /js/mootools.ext.js HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /tools/mootools/mootools-core.js HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /tools/mootools/mootools-more.js HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /skins/classic/views/css/event.css HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /js/overlay.js HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /skins/classic/js/skin.js HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /skins/classic/views/js/event.js HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:19 -0800] "GET /graphics/transparent.gif HTTP/1.1" 304 -
+       [11/Jan/2015:19:26:20 -0800] "GET /cgi-bin/nph-zms?source=event&mode=jpeg&event=15&frame=1&scale=100&rate=100&maxfps=5&replay=single&connkey=417685&rand=1421033179 HTTP/1.1" 200 -
+       [11/Jan/2015:19:26:20 -0800] "POST /index.php HTTP/1.1" 200 92
+       [11/Jan/2015:19:26:20 -0800] "POST /index.php HTTP/1.1" 200 509
+       [11/Jan/2015:19:26:20 -0800] "POST /index.php HTTP/1.1" 200 80
+       [11/Jan/2015:19:26:20 -0800] "POST /index.php HTTP/1.1" 200 509
+       [11/Jan/2015:19:26:20 -0800] "POST /index.php HTTP/1.1" 200 80
+       [11/Jan/2015:19:20:59 -0800] "GET /cgi-bin/nph-zms?source=event&mode=jpeg&event=15&frame=1&scale=100&rate=100&maxfps=5&replay=single&connkey=647696&rand=1421032859 HTTP/1.1" 200 -
+       [11/Jan/2015:19:26:30 -0800] "POST /index.php HTTP/1.1" 200 119
+       [11/Jan/2015:19:26:40 -0800] "POST /index.php HTTP/1.1" 200 15
+     #+END_SRC
+  3. Error
+     #+BEGIN_SRC conf
+       [Sun Jan 11 19:26:40.642853 2015] [:error] [pid 1521] [client ::1:35275] ERR [socket_sendto( /zoneminder/socks/zms-417685s.sock ) failed: No such file or directory], referer: http://localhost/?view=event&eid=15&filter[terms][0][attr]=MonitorId&filter[terms][0][op]=%3D&filter[terms][0][val]=1&sort_field=StartTime&sort_asc=1&page=1
+     #+END_SRC
+* includes/funtions.php Line 2330
+  Date: 2015-01-12
+  What I'm doing: patching includes/functions.php to see if I can find cause of:
+  socket_sendto( /zoneminder/socks/zms-558500s.sock ) failed: Connection refused
+
+  file:/srv/http/includes/functions.php
+
+  ajaxError
+
+  file:/srv/http/ajax/stream.php
+
+** file:/srv/http/skins/classic/views/watch.php
+* 2015-01-12 Build again from source, ZM_NO_MMAP
+  1. Build
+     #+BEGIN_SRC sh :tangle /tmp/a.sh
+       #!/bin/bash
+
+       cmake -DCMAKE_BUILD_TYPE=Debug \
+             -DCMAKE_INSTALL_PREFIX=/usr \
+             -DZM_WEB_USER=http \
+             -DZM_WEBDIR=/srv/http/ \
+             -DZM_CGIDIR=/srv/http/cgi-bin \
+             -DZM_CONTENTDIR=/zoneminder/content \
+             -DZM_LOGDIR=/zoneminder/log \
+             -DZM_RUNDIR=/zoneminder/run \
+             -DZM_TMPDIR=/zoneminder/tmp \
+             -DZM_SOCKDIR=/zoneminder/sock \
+             -DZM_NO_MMAP=on .
+       exit
+
+       make V=0
+     #+END_SRC
+  2. Make and Install
+  3. Enable PHP file:/etc/httpd/conf/httpd.conf
+     1. Place this in the LoadModule list anywhere after LoadModule dir_module modules/mod_dir.so:
+	#+BEGIN_SRC conf
+	  LoadModule php5_module modules/libphp5.so
+	#+END_SRC
+     2. Place this at the end of the Include list:
+	#+BEGIN_SRC conf
+	  Include conf/extra/php5_module.conf     
+	#+END_SRC
+     3. To use mod_mpm_prefork replace
+	#+BEGIN_SRC conf
+          LoadModule mpm_event_module modules/mod_mpm_event.so        
+	#+END_SRC
+	with
+	#+BEGIN_SRC conf
+          LoadModule mpm_prefork_module modules/mod_mpm_prefork.so        
+	#+END_SRC
+     4. Enable CGI
+
+* 2015-01-13 Note that event.php has $connkey = generateConnKey();
+** function generateConnKey file:/srv/http/includes/functions.php::2356  
+** file:/srv/http/skins/classic/views/event.php
+** file:/srv/http/skins/classic/views/
+** file:/srv/http/skins/classic/views/js/event.js.php
+** file:/srv/http/skins/classic/views/js/event.js

@@ -1,0 +1,7 @@
+* /usr/lib64 exists in filesystem
+  | Flag                        | Zoneminder.pm               |
+  |-----------------------------+-----------------------------|
+  | ZM_PERL_USE_PATH=/usr/lib   | usr/lib/perl5/ZoneMinder.pm |
+  | ZM_PERL_USE_PATH=/usr/lib64 | usr/lib/perl5/ZoneMinder.pm |
+  | ZM_PERL_USE_PATH=foo        |                             |
+
