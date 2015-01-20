@@ -6,14 +6,13 @@ post_install() {
     \|^;extension=gd.so$|        s|^;||;
     \|^;extension=gettext.so$|   s|^;||;
     \|^;extension=mcrypt.so$|    s|^;||;
-    \|^;extension=session.so$|   s|^;||;
     \|^;extension=sockets.so$|   s|^;||;
     \|^;extension=openssl.so$|   s|^;||;
     \|^;extension=ftp.so$|       s|^;||;
     \|^;extension=zip.so$|       s|^;||;
     
     # Add zoneminder paths to open_basedir
-    s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks|;
+    s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks:/var/log/zoneminder|;
     ' /etc/php/php.ini > /etc/php/php.ini.zoneminder
 
     # edit /etc/httpd/conf/httpd.conf for Zoneminder
@@ -59,7 +58,6 @@ post_install() {
     extension=gettext.so
     extension=mcrypt.so
     extension=mysqli.so
-    extension=session.so
     extension=sockets.so
     extension=openssl.so
     extension=ftp.so
@@ -123,7 +121,6 @@ Note:
 ==> "extension=gettext.so"
 ==> "extension=mcrypt.so"
 ==> "extension=mysqli.so"
-==> "extension=session.so"
 ==> "extension=sockets.so"
 ==> "date.timezone = <my_country>/<my_city>"
 
