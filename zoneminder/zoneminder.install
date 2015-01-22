@@ -48,14 +48,14 @@ post_install() {
 
   PHP configuration
   -----------------
-  * Check and make sure these are uncommented in /etc/php/php.ini:
+  * Check and make sure these are uncommented in /etc/php/php.ini: 
     extension=ftp.so
     extension=gd.so
     extension=gettext.so
     extension=mcrypt.so
-	extension=openssl.so
-	extension=pdo_mysql.so
-	extension=sockets.so
+    extension=openssl.so
+    extension=pdo_mysql.so
+    extension=sockets.so
     extension=zip.so
   * Add /etc/zm.conf, /srv/http/zoneminder, /var/cache/zoneminder, and /srv/zoneminder/socks to open_basedir in the zoneminder vhosts configuration file in apache:
     php_admin_value open_basedir "/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks/:/var/log/zoneminder/"
@@ -111,14 +111,12 @@ Note:
 
 ==> Disable php with mysql if it isn't needed with others servers, 
 ==> comment that lines in /etc/php/php.ini:
-==> "extension=ftp.so"
+==> "extension=mysql.so"
 ==> "extension=gd.so"
 ==> "extension=gettext.so"
 ==> "extension=mcrypt.so"
-==> "extension=openssl.so"
-==> "extension=pdo_mysql.so"
+==> "extension=mysqli.so"
 ==> "extension=sockets.so"
-==> "extension=zip.so"
 ==> "date.timezone = <my_country>/<my_city>"
 
 ==> Remove log files and "zoneminder" directory in "/var/log/zoneminder".

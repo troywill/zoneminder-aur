@@ -85,6 +85,7 @@
    #+NAME: CONTRIBUTORS
    #+BEGIN_SRC conf :padline no
      # Maintainer: Troy Will <troydwill at gmail dot com>
+     # Contributor: Charles Spence IV         <cspence@unomaha.edu>
      # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
      # Contributor: Jacek Burghardt           <jacek@hebe.us>
      # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
@@ -92,7 +93,6 @@
      # Contributor: Ross melin                <rdmelin@gmail.com>
      # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
      # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
-     # Contributor: Charles Spence IV         <cspence@unomaha.edu>
      # Orginally based on a Debian Squeeze package
    #+END_SRC
 ** pkgver-git
@@ -110,7 +110,7 @@
      _pkgname=zoneminder
      pkgname=zoneminder
      pkgver=1.28.0
-     pkgrel=10
+     pkgrel=11
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -120,7 +120,7 @@
      _pkgname=zoneminder
      pkgname=zoneminder-git
      pkgver=1.28.0
-     pkgrel=10
+     pkgrel=11
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -142,7 +142,7 @@
          perl-mime-lite perl-mime-tools
      )
      makedepends=(
-         base-devel cmake netpbm
+         cmake make gcc netpbm
      )
      optdepends=(
          netpbm
@@ -162,11 +162,9 @@
          httpd-zoneminder.conf
          zoneminder.service
      )
-     sha512sums=(
-     'ac2a036adac436d76db8bb0b161d063111cc7cc7f6bcb9ca1b46862cfb0285b291926df716df645c0be47b7465bbbf3b1050c85529ff5068bdcc34f1c8ba6df1'
-     'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-     '9d8d21022b224f833492221e6a3e7c8f0bf2272641c37440506d3fccb3995d18121e8725908345cd110513c6226cd60d100daf479953dcc0db12b8c8991c93c5'
-     )
+     sha256sums=('b9ee65635753e094dcad6cdb480acc42bff8b8f023ee008790883a4308273ca2'
+                 '6e7155fc145e29351ec97f2b0c8d493fff871129a7e4c139d07bf6a9fc977919'
+                 '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3')
    #+END_SRC
 
    #+NAME: SOURCES-GIT
@@ -176,17 +174,15 @@
          httpd-zoneminder.conf
          zoneminder.service
      )
-     # Because the source is not static, skip Git checksum:        
-     sha512sums=(
-         'SKIP'
-         'fb9bf263c37fae30d775872a33cb319f2f2a7a4f38faff8c143253dbefd7278b295d0805e11ace6423a8ec2b50ef60f3426b6e6a53548c867ef7f109baa52c36'
-         '9d8d21022b224f833492221e6a3e7c8f0bf2272641c37440506d3fccb3995d18121e8725908345cd110513c6226cd60d100daf479953dcc0db12b8c8991c93c5'
-     )
+     # Because the source is not static, skip Git checksum:
+     sha256sums=('SKIP'
+                 '6e7155fc145e29351ec97f2b0c8d493fff871129a7e4c139d07bf6a9fc977919'
+                 '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3')
    #+END_SRC
 ** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
   #+NAME: httpd-zoneminder.conf
   #+BEGIN_SRC conf
-    # /etc/httpd/conf/extra/httpd-zm.conf
+    # /etc/httpd/conf/extra/httpd-zoneminder.conf
     # Config for zoneminder web app
 
     Alias /zm "/srv/http/zoneminder"
@@ -206,6 +202,9 @@
       Order allow,deny
       Allow from all
     </Directory>
+
+    # Provide PHP access to important directories
+    php_admin_value open_basedir "/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks/:/var/log/zoneminder/"
   #+END_SRC
 ** zoneminder.service
   #+NAME: zoneminder.service
@@ -281,19 +280,17 @@
     #+BEGIN_SRC conf
         PHP configuration
         -----------------
-        * Uncomment the pdo_mysql.so line in /etc/php/php.ini to enable MariaDB:
-          extension=mysql.so
-        * Check and make sure these are uncommented:
+        * Check and make sure these are uncommented in /etc/php/php.ini: 
+          extension=ftp.so
           extension=gd.so
           extension=gettext.so
           extension=mcrypt.so
-          extension=mysqli.so
-          extension=sockets.so
           extension=openssl.so
-          extension=ftp.so
+          extension=pdo_mysql.so
+          extension=sockets.so
           extension=zip.so
-        * Add to /etc, /srv/http/zoneminder, /var/cache/zoneminder, and /srv/zoneminder/socks to open_basedir:
-          open_basedir = /home:/tmp:/usr/share/pear:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks
+        * Add /etc/zm.conf, /srv/http/zoneminder, /var/cache/zoneminder, and /srv/zoneminder/socks to open_basedir in the zoneminder vhosts configuration file in apache:
+          php_admin_value open_basedir "/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks/:/var/log/zoneminder/"
         * Set your timezone in php.ini:
           date.timezone = <your_country>/<your_city>
     #+END_SRC
@@ -355,10 +352,7 @@
      ==> "extension=sockets.so"
      ==> "date.timezone = <my_country>/<my_city>"
 
-     ==> Edit /etc/php/php.ini and remove "/etc" and "/srv/http/zoneminder"
-     ==> in the "open_basedir".
-
-     ==> Remove log files and "zonemider" directory in "/var/log/zoneminder".
+     ==> Remove log files and "zoneminder" directory in "/var/log/zoneminder".
 
      ==> Backup and remove "events", "images" and "temp" dirs in "/var/cache/zoneminder".
      EOF
@@ -661,6 +655,17 @@
     #+NAME: PHP.INI.SED
     #+BEGIN_SRC sh
       # Enable these libraries by removing the leading comment character
+      \|^;extension=ftp.so$|       s|^;||;
+      \|^;extension=gd.so$|        s|^;||;
+      \|^;extension=gettext.so$|   s|^;||;
+      \|^;extension=mcrypt.so$|    s|^;||;
+      \|^;extension=openssl.so$|   s|^;||;
+      \|^;extension=pdo_mysql.so$| s|^;||;
+      \|^;extension=sockets.so$|   s|^;||;
+      \|^;extension=zip.so$|       s|^;||;
+    #+END_SRC
+    #+BEGIN_SRC sh
+      # Enable these libraries by removing the leading comment character
       \|^;extension=pdo_mysql.so$| s|^;||;
       \|^;extension=gd.so$|        s|^;||;
       \|^;extension=gettext.so$|   s|^;||;
@@ -669,12 +674,22 @@
       \|^;extension=openssl.so$|   s|^;||;
       \|^;extension=ftp.so$|       s|^;||;
       \|^;extension=zip.so$|       s|^;||;
-
-      # Add zoneminder paths to open_basedir
-      s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks:/var/log/zoneminder|;
     #+END_SRC
+    
 * perl-astro-suntime-zoneminder
 * Changelog
+*** Thursday, January 22, 2015
+    1. Removed open_basedir sed transformation
+       #+BEGIN_SRC sh
+         # Add zoneminder paths to open_basedir
+         s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks:/var/log/zoneminder|;
+       #+END_SRC
+    2. 
+       
+
+    
+    
+    
 *** Wednesday, January 14, 2015
     -DZM_PERL_SUBPREFIX=/lib/perl5 with help of Charles Spence IV to force Perl modules
      # to /usr/lib/perl5/ on non i686 architectures
