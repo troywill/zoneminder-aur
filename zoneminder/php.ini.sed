@@ -7,6 +7,3 @@
 \|^;extension=openssl.so$|   s|^;||;
 \|^;extension=ftp.so$|       s|^;||;
 \|^;extension=zip.so$|       s|^;||;
-
-# Add zoneminder paths to open_basedir
-s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks:/var/log/zoneminder|;
