@@ -745,6 +745,18 @@ Please visit our GitHub at http://github.com/ZoneMinder/ZoneMinder
    #+END_SRC
 ** TODO https://github.com/ZoneMinder/ZoneMinder/issues/88
 ** zoneminder-aur wiki
+* Merging from the command line
+** Step One: From your project repository, check out a new branch and test the changes.
+   #+BEGIN_SRC sh
+     git checkout -b cspenceiv-master master
+     git pull git://github.com/cspenceiv/zoneminder-aur.git master
+   #+END_SRC
+** Step Two: From your project repository, check out a new branch and test the changes.
+   #+BEGIN_SRC sh
+     git checkout master
+     git merge --no-ff cspenceiv-master
+     git push origin master   
+   #+END_SRC
 * https://github.com/ZoneMinder/ZoneMinder/pull/524
 * Introduction
 * Chunks
