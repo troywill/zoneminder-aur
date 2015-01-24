@@ -1,5 +1,42 @@
 * Introduction
   These are the steps I took to get a Foscam F18910W camera working with Zoneminder.
+* videostream.cgi
+  + Description :: ipcamera use server push mode to send client-end the jpeg video stream.
+  + Permission :: visitor
+  + Grammar :: /videostream.cgi[?user=&pwd=&resolution=&rate=]
+** resolution
+   + 8:320*240
+   + 32:640*480
+** rate image data translate speed
+   value rang 0-23
+   |  0 | full speed |
+   |  1 | 20 fps     |
+   |  3 | 15 fps     |
+   |  6 | 10 fps     |
+   | 11 | 5 fps      |
+   | 12 | 4 fps      |
+   | 13 | 3 fps      |
+   | 14 | 2 fps      |
+   | 15 | 1 fps      |
+   | 17 | 1 fp/2s    |
+   | 19 | 1 fp/3s    |
+   | 21 | 1 fp/4s    |
+   | 23 | 1 fp/5s    |
+** Frames per second at 320x240
+   | fps | string                               |
+   |-----+--------------------------------------|
+   |   1 | videostream.cgi?resolution=8&rate=15 |
+   |   2 | videostream.cgi?resolution=8&rate=14 |
+   #+BEGIN_SRC sh
+     videostream.cgi?resolution=8&rate=15
+   #+END_SRC
+** Frames per second at 640x480
+   | fps | string                                |
+   |-----+---------------------------------------|
+   |   1 | videostream.cgi?resolution=32&rate=15 |
+   |   2 | videostream.cgi?resolution=32&rate=14 |
+   |     |                                       |
+   
 * TODO Access the camera
   1. [ ] file:./bin/set-ip-address.sh
      #+BEGIN_SRC sh :tangle bin/set-ip-address.sh :shebang #!/bin/bash
