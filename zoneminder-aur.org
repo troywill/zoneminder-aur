@@ -110,7 +110,7 @@
      _pkgname=zoneminder
      pkgname=zoneminder
      pkgver=1.28.1
-     pkgrel=1
+     pkgrel=2
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -120,7 +120,7 @@
      _pkgname=zoneminder
      pkgname=zoneminder-git
      pkgver=1.28.1
-     pkgrel=1
+     pkgrel=2
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -163,7 +163,7 @@
          zoneminder.service
      )
      sha256sums=('e55fa6ce1fd6c27912cd1de67fca3f80fad579f330020a384dc82838704d11ba'
-                 'ce3d152fe8fd06e342378c50b46b8e6934bc52ce8efe7eea9c544ae407903dd6'
+                 'c2ca71ec57e53da040de61ff212ac063574e5ddfb4c333b70be060d5ec26c62c'
                  '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3')
    #+END_SRC
 
@@ -176,7 +176,7 @@
      )
      # Because the source is not static, skip Git checksum:
      sha256sums=('SKIP'
-                 'ce3d152fe8fd06e342378c50b46b8e6934bc52ce8efe7eea9c544ae407903dd6'                 
+                 'c2ca71ec57e53da040de61ff212ac063574e5ddfb4c333b70be060d5ec26c62c'
                  '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3')
    #+END_SRC
 ** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
@@ -191,6 +191,8 @@
       AllowOverride None
       Order allow,deny
       Allow from all
+      # Provide PHP access to important directories
+      php_admin_value open_basedir "/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks/:/var/log/zoneminder/"
     </Directory>
 
     ScriptAlias /cgi-bin "/srv/http/cgi-bin"
@@ -201,8 +203,6 @@
       Allow from all
     </Directory>
 
-    # Provide PHP access to important directories
-    php_admin_value open_basedir "/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks/:/var/log/zoneminder/"
   #+END_SRC
 ** zoneminder.service
   #+NAME: zoneminder.service
