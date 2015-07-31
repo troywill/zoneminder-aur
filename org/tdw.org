@@ -2,6 +2,7 @@
   1. makepkg --geninteg >> PKGBUILD
   2. makepkg --syncdeps
 ** HOW TO UPLOAD PKGBUILD TO AUR
+   1. [ ] Read 
    1. [ ] run mkaurball (pkgbuild-introspection)
       + Will end up with a file like zoneminder-1.28.0-1.src.tar.gz
    2. Read [[https://wiki.archlinux.org/index.php/Arch_User_Repository#Sharing_and_maintaining_packages][Sharing and maintaining packages]]
@@ -1696,3 +1697,35 @@ package() {
    + https://bugs.launchpad.net/ubuntu/+source/zoneminder/+bug/1159361
 
    
+* Reinstall all
+  #+BEGIN_SRC sh :tangle ./reinstall-all.sh :shebang #!/bin/bash
+    set -o nounset
+
+    REMOVE='sudo pacman --remove'
+    RVF='sudo rm -rvf'
+
+    ZONEMINDER_CACHE_DIR=/var/cache/zoneminder
+
+    sudo systemctl stop zoneminder
+    sudo systemctl stop httpd
+    sudo systemctl stop mysqld
+
+    $REMOVE zoneminder
+    $REMOVE zoneminder-git
+    sudo rm -rvf $ZONEMINDER_CACHE_DIR
+    sudo rm -rvf /var/log/zoneminder
+
+    $REMOVE php-cgi
+    $REMOVE php-gd
+    $REMOVE php-mcrypt
+    $REMOVE php-apache
+    $REMOVE php
+    $RVF /etc/php
+
+    $REMOVE apache
+    $RVF /etc/httpd
+
+    $REMOVE mariadb
+    $REMOVE mariadb-clients
+    $RVF /var/lib/mysql/
+  #+END_SRC

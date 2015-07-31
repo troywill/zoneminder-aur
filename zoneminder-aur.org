@@ -1,19 +1,19 @@
 * zoneminder PKGBUILD 						   :noexport:
 ** TANGLE zoneminder/PKGBUILD
    #+BEGIN_SRC sh :tangle zoneminder/PKGBUILD :noweb yes :padline no
-          <<CONTRIBUTORS>>
-          <<PACKAGE_VERSION_DATA>>
-          backup=( etc/zm.conf )
-          url="https://github.com/ZoneMinder/ZoneMinder/releases"
-          license=( GPL )
-          <<DEPENDENCIES>>
-          install=$_pkgname.install
+     <<CONTRIBUTORS>>
+     <<PACKAGE_VERSION_DATA>>
+     backup=( etc/zm.conf )
+     url="https://github.com/ZoneMinder/ZoneMinder/releases"
+     license=( GPL )
+     <<DEPENDENCIES>>
+     install=$_pkgname.install
 
-          <<SOURCES>>
-     
-          <<BUILD>>
-     
-          <<PACKAGE>>
+     <<SOURCES>>
+          
+     <<BUILD>>
+          
+     <<PACKAGE>>
    #+END_SRC
 ** TANGLE httpd-zoneminder.conf
    #+BEGIN_SRC conf :tangle zoneminder/httpd-zoneminder.conf :padline no :noweb yes
@@ -35,9 +35,6 @@
    #+BEGIN_SRC sh :tangle zoneminder/httpd.conf.sed :padline no :noweb yes
      <<HTTPD.CONF.SED>>
    #+END_SRC
-**** TODO
-     1. fix /tmp/zoneminder
-     2. 
 * zoneminder GIT PKGBUILD 					   :noexport:
 ** TANGLE zoneminder-git/PKGBUILD
    #+BEGIN_SRC sh :tangle zoneminder-git/PKGBUILD :noweb yes :padline no
@@ -161,10 +158,13 @@
          https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
          httpd-zoneminder.conf
          zoneminder.service
+         httpd.conf.zoneminder
      )
      sha256sums=('e55fa6ce1fd6c27912cd1de67fca3f80fad579f330020a384dc82838704d11ba'
                  'c2ca71ec57e53da040de61ff212ac063574e5ddfb4c333b70be060d5ec26c62c'
-                 '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3')
+                 '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3'
+                 '3dc4b04a90a3428131b8b5666baf82734a878629feb9f8025325f89d881a2045'
+                )
    #+END_SRC
 
    #+NAME: SOURCES-GIT
@@ -173,11 +173,14 @@
          git://github.com/$_pkgname/$_pkgname.git
          httpd-zoneminder.conf
          zoneminder.service
+         httpd.conf.zoneminder
      )
      # Because the source is not static, skip Git checksum:
      sha256sums=('SKIP'
                  'c2ca71ec57e53da040de61ff212ac063574e5ddfb4c333b70be060d5ec26c62c'
-                 '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3')
+                 '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3'
+                 '3dc4b04a90a3428131b8b5666baf82734a878629feb9f8025325f89d881a2045'
+                )
    #+END_SRC
 ** httpd-zoneminder.conf file:/etc/httpd/conf/extra/httpd-zoneminder.conf
   #+NAME: httpd-zoneminder.conf
@@ -232,12 +235,12 @@
          # edit /etc/php.ini for Zoneminder
          sed -e '
          <<PHP.INI.SED>>
-         ' /etc/php/php.ini > /etc/php/php.ini.zoneminder
+         ' /etc/php/php.ini > /tmp/php.ini.zoneminder
 
          # edit /etc/httpd/conf/httpd.conf for Zoneminder
          sed -e '
          <<HTTPD.CONF.SED>>
-         ' /etc/httpd/conf/httpd.conf > /etc/httpd/conf/httpd.conf.zoneminder
+         ' /etc/httpd/conf/httpd.conf > /tmp/httpd.conf.zoneminder
          
          cat << EOF
 
@@ -278,17 +281,8 @@
     #+BEGIN_SRC conf
         PHP configuration
         -----------------
-        * Check and make sure these are uncommented in /etc/php/php.ini: 
-          extension=ftp.so
-          extension=gd.so
-          extension=gettext.so
-          extension=mcrypt.so
-          extension=openssl.so
-          extension=pdo_mysql.so
-          extension=sockets.so
-          extension=zip.so
-        * Add /etc/zm.conf, /srv/http/zoneminder, /var/cache/zoneminder, and /srv/zoneminder/socks to open_basedir in the zoneminder vhosts configuration file in apache:
-          php_admin_value open_basedir "/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks/:/var/log/zoneminder/"
+        * Check and make sure these are uncommented in /etc/php/php.ini:
+          <<PHP_MODULES_UNCOMMENT_CHUNK>>
         * Set your timezone in php.ini:
           date.timezone = <your_country>/<your_city>
     #+END_SRC
@@ -305,6 +299,31 @@
     #+END_SRC
 *** TODO
     1. fix /tmp/zoneminder
+** PHP_MODULES_UNCOMMENT_CHUNK
+   #+NAME: PHP_MODULES_UNCOMMENT_CHUNK
+   #+BEGIN_SRC sh
+     extension=ftp.so
+     extension=gd.so
+     extension=gettext.so
+     extension=mcrypt.so
+     extension=openssl.so
+     extension=pdo_mysql.so
+     extension=sockets.so
+     extension=zip.so
+   #+END_SRC
+** PHP_MODULES_COMMENT_CHUNK
+   #+NAME: PHP_MODULES_COMMENT_CHUNK
+   #+BEGIN_SRC sh
+     # extension=ftp.so
+     # extension=gd.so
+     # extension=gettext.so
+     # extension=mcrypt.so
+     # extension=openssl.so
+     # extension=pdo_mysql.so
+     # extension=sockets.so
+     # extension=zip.so
+     # "date.timezone = <my_country>/<my_city>"
+   #+END_SRC
 ** POST_REMOVE_CHUNK
    #+NAME: POST_REMOVE_CHUNK
    #+BEGIN_SRC sh
@@ -342,13 +361,7 @@
 
      ==> Disable php with mysql if it isn't needed with others servers, 
      ==> comment that lines in /etc/php/php.ini:
-     ==> "extension=mysql.so"
-     ==> "extension=gd.so"
-     ==> "extension=gettext.so"
-     ==> "extension=mcrypt.so"
-     ==> "extension=mysqli.so"
-     ==> "extension=sockets.so"
-     ==> "date.timezone = <my_country>/<my_city>"
+         <<PHP_MODULES_COMMENT_CHUNK>>
 
      ==> Remove log files and "zoneminder" directory in "/var/log/zoneminder".
 
@@ -583,14 +596,17 @@
      #+NAME: INSTALL_CONF_FILES
      #+BEGIN_SRC sh
        # Install configuration files
-       mkdir -p                                       $pkgdir/etc/httpd/conf/extra
-       install -D -m 644 $srcdir/httpd-$_pkgname.conf $pkgdir/etc/httpd/conf/extra
+       mkdir -p                                        $pkgdir/etc/httpd/conf/extra
+       install -D -m 644 $srcdir/httpd-$_pkgname.conf  $pkgdir/etc/httpd/conf/extra
 
-       mkdir -p                                    $pkgdir/usr/lib/systemd/system
-       install -D -m 644 $srcdir/$_pkgname.service $pkgdir/usr/lib/systemd/system
+       mkdir -p                                        $pkgdir/usr/lib/systemd/system
+       install -D -m 644 $srcdir/$_pkgname.service     $pkgdir/usr/lib/systemd/system
 
-       install -D -m 644 COPYING     $pkgdir/usr/share/license/$_pkgname
-       install -D -m 644 db/zm*.sql  $pkgdir/usr/share/$_pkgname/db     
+       install -D -m 644 COPYING                       $pkgdir/usr/share/license/$_pkgname
+       install -D -m 644 db/zm*.sql                    $pkgdir/usr/share/$_pkgname/db
+
+       mkdir -p                                        $pkgdir/usr/share/doc/$_pkgname
+       install -D -m 644 $srcdir/httpd.conf.zoneminder $pkgdir/usr/share/doc/$_pkgname
      #+END_SRC
 **** POLKIT_PERMISSIONS_CHUNK
      #+NAME: POLKIT_PERMISSIONS_CHUNK     
@@ -622,6 +638,7 @@
       <<HTTPD-ZONEMINDER.CONF.SED>>    
     #+END_SRC
 **** MOD_MPM_PREFORK.SED
+     
      #+NAME: MOD_MPM_PREFORK.SED
      #+BEGIN_SRC conf
        # Use mod_mpm_prefork instead of mod_mpm_event.so (FS#39218).
@@ -630,9 +647,11 @@
 **** MOD_CGI.SED
      #+NAME: MOD_CGI.SED
      #+BEGIN_SRC conf
-       # Zoneminder requires cgi
-       \|^#LoadModule cgi_module modules/mod_cgi.so$| s|#||;
+       # Zoneminder needs Apache configured to permit CGI execution
+       \|^\t#LoadModule cgi_module modules/mod_cgi.so$| s|\t#|\t|;
      #+END_SRC
+***** Notes:
+      1. ^[[:space:]]+ is a regular expression that matches beginning of line and any number of whitespace characters
 **** LIBPHP5.SED
      #+NAME: LIBPHP5.SED
      #+BEGIN_SRC conf
@@ -674,21 +693,14 @@
       \|^;extension=zip.so$|       s|^;||;
     #+END_SRC
     
-* perl-astro-suntime-zoneminder
 * Changelog
-*** Thursday, January 22, 2015
-    1. Removed open_basedir sed transformation
-       #+BEGIN_SRC sh
-         # Add zoneminder paths to open_basedir
-         s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks:/var/log/zoneminder|;
-       #+END_SRC
-    2. 
-       
-
-    
-    
-    
-*** Wednesday, January 14, 2015
+** Thursday, January 22, 2015
+   1. Removed open_basedir sed transformation
+      #+BEGIN_SRC sh
+	# Add zoneminder paths to open_basedir
+	s|^open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/$|&:/etc:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks:/var/log/zoneminder|;
+      #+END_SRC
+** Wednesday, January 14, 2015
     -DZM_PERL_SUBPREFIX=/lib/perl5 with help of Charles Spence IV to force Perl modules
      # to /usr/lib/perl5/ on non i686 architectures
 I noticed that while installing the package with pacman, a couple warnings appear:
@@ -703,3 +715,5 @@ These warnings can be fixed by including these three lines on the end of the pac
 # Fixing permissions
 chmod 700 $pkgdir/usr/share/polkit-1/rules.d/
 chown polkitd $pkgdir/usr/share/polkit-1/rules.d/
+* README
+  
