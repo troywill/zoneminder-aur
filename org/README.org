@@ -1,0 +1,69 @@
+* How to Build, Install, and Configure Zoneminder on Arch Linux
+** Building and Installing Zoneminder
+  Note: Please refer to the [[https://wiki.archlinux.org/index.php/Arch_User_Repository][Arch User Repository]] page if you are unfamilar with building a package from the Arch User Repository (AUR).
+  1. Build the 4 Zoneminder perl module dependencies from the AUR
+     1. Build and install the [[https://aur.archlinux.org/packages/pe/perl-expect][perl-expect]] package
+     2. Build and install the [[https://aur.archlinux.org/packages/pe/perl-net-sftp-foreign][perl-net-sftp-foreign]] package
+     3. Build and install the [[https://aur.archlinux.org/packages/pe/perl-php-serialization/perl-php-serialization.tar.gz][perl-php-serialization]] package
+     4. Build and install the [[https://aur.archlinux.org/packages/pe/perl-sys-mmap/perl-sys-mmap.tar.gz][perl-sys-mmap]] package
+  2. Build and install the zoneminder package
+  3. Create the zoneminder MySQL database
+     - Note: https://wiki.archlinux.org/index.php/MySQL
+     - file:/usr/share/zoneminder/db/zm_create.sql
+** Configure Apache to enable PHP file:/etc/httpd/conf/httpd.conf file:/usr/share/doc/zoneminder/httpd.conf.zoneminder file:/tmp/httpd.conf.zoneminder
+   1. Comment out LoadModule mpm_event_module modules/mod_mpm_event.so
+      #+BEGIN_SRC conf
+        #LoadModule mpm_event_module modules/mod_mpm_event.so
+      #+END_SRC
+   2. Uncomment LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+      #+BEGIN_SRC conf
+        LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+      #+END_SRC
+   3. LoadModule php5_module modules/libphp5.so at or near line 183
+      #+BEGIN_SRC CONF
+        LoadModule php5_module modules/libphp5.so
+      #+END_SRC
+   4. Place this at or near the end of the file
+      #+BEGIN_SRC conf
+        Include conf/extra/php5_module.conf
+      #+END_SRC
+** Configure Apache to load zoneminder values
+   #+BEGIN_SRC conf
+     Include conf/extra/httpd-zoneminder.conf
+   #+END_SRC
+** Configure Apache for CGI
+   #+BEGIN_SRC conf
+     <IfModule mpm_prefork_module>
+             LoadModule cgi_module modules/mod_cgi.so
+     </IfModule>
+   #+END_SRC
+** Configure PHP to load required modules file:/etc/php/php.ini file:/tmp/
+   - Uncomment these lines:
+     #+BEGIN_SRC conf
+       extension=ftp.so
+       extension=gd.so
+       extension=gettext.so
+       extension=mcrypt.so
+       extension=openssl.so
+       extension=pdo_mysql.so
+       extension=sockets.so
+       extension=zip.so
+     #+END_SRC
+** PHP Timezone  http://php.net/date.timezone http://php.net/manual/en/timezones.php
+   #+BEGIN_SRC conf
+     date.timezone = "America/Los_Angeles"
+   #+END_SRC
+** MySQL
+   1. sudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+   2. sudo systemctl start mysqld
+   3. mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload --user root
+   4. cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf --user root
+   5. echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql -p --user root mysql
+** Local Webcam
+   sudo gpasswd --add http video
+* Troubleshooting
+** Checklist
+   1. Is PHP enabled?
+      
+   2. Is CGI enabled?
+* Resources
