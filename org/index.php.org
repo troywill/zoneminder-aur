@@ -183,7 +183,6 @@
   5. # 4 seemed to work
   6. 20:52 Change $debug = false, reverses #1
   7. 21:03 print(ZM_SKIN_DEFAULT);
-     
 ** Code Tangle
   #+BEGIN_SRC perl :tangle /srv/http/zoneminder/index.php :padline :no
     <?php

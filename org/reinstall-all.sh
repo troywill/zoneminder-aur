@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -o nounset
+set -o verbose
 
 REMOVE='sudo pacman --remove'
 RVF='sudo rm -rvf'
@@ -13,8 +14,9 @@ sudo systemctl stop mysqld
 
 $REMOVE zoneminder
 $REMOVE zoneminder-git
-sudo rm -rvf $ZONEMINDER_CACHE_DIR
-sudo rm -rvf /var/log/zoneminder
+$RVF $ZONEMINDER_CACHE_DIR
+$RVF /var/log/zoneminder
+$RVF /srv/zoneminder
 
 $REMOVE php-cgi
 $REMOVE php-gd

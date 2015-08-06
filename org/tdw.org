@@ -1700,6 +1700,7 @@ package() {
 * Reinstall all
   #+BEGIN_SRC sh :tangle ./reinstall-all.sh :shebang #!/bin/bash
     set -o nounset
+    set -o verbose
 
     REMOVE='sudo pacman --remove'
     RVF='sudo rm -rvf'
@@ -1712,8 +1713,9 @@ package() {
 
     $REMOVE zoneminder
     $REMOVE zoneminder-git
-    sudo rm -rvf $ZONEMINDER_CACHE_DIR
-    sudo rm -rvf /var/log/zoneminder
+    $RVF $ZONEMINDER_CACHE_DIR
+    $RVF /var/log/zoneminder
+    $RVF /srv/zoneminder
 
     $REMOVE php-cgi
     $REMOVE php-gd
@@ -1724,8 +1726,26 @@ package() {
 
     $REMOVE apache
     $RVF /etc/httpd
+    $RVF /var/log/httpd
 
     $REMOVE mariadb
     $REMOVE mariadb-clients
     $RVF /var/lib/mysql/
+  #+END_SRC
+* MYSQL
+  #+BEGIN_SRC sh :tangle ./mysql.sh :shebang #!/usr/bin/bash
+    MYSQL_USER=root
+    set -o verbose
+    set -o errexit
+
+    sudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+
+    sudo systemctl start mysqld
+
+    mysqladmin --defaults-file=/etc/mysql/my.cnf -p -f reload --user $MYSQL_USER
+       
+    cat /usr/share/zoneminder/db/zm_create.sql | mysql --defaults-file=/etc/mysql/my.cnf --user $MYSQL_USER
+
+    echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql -p --user $MYSQL_USER mysql
+
   #+END_SRC

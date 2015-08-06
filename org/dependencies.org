@@ -42,7 +42,7 @@
  | libmime-lite-perl         |   |   |   |   |
  | dh-autoreconf             |   |   |   |   |
  | dpatch                    |   |   |   |   |
-* 
+
 * Introduction
   1. https://aur.archlinux.org/packages/zoneminder/
 * https://github.com/troywill/zoneminder-aur/wiki

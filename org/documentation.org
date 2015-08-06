@@ -4,8 +4,6 @@
 *** [[http://www.zoneminder.com/wiki/index.php/Documentation#Installation_from_Source][Installation from Source]]
 ** http://www.zoneminder.com/wiki/index.php/Troubleshooting
 *** http://www.zoneminder.com/wiki/index.php/FAQ
-   
-
 * https://github.com/ZoneMinder/ZoneMinder
 ** [[https://github.com/ZoneMinder/ZoneMinder/wiki][wiki]]
 ** [[https://github.com/ZoneMinder/ZoneMinder/issues][issues]]

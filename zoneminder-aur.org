@@ -463,7 +463,7 @@
            -DZM_RUNDIR=/srv/zoneminder \
            -DZM_TMPDIR=/srv/zoneminder/tmp \
            -DZM_SOCKDIR=/srv/zoneminder/socks .
-
+ 
      make V=0
    #+END_SRC
 
@@ -525,7 +525,9 @@
        mkdir -pv           $pkgdir/var/{cache/zoneminder,log/zoneminder}
        chown -Rv http.http $pkgdir/var/{cache/zoneminder,log/zoneminder}
 
-       mkdir -pv          $pkgdir/srv/zoneminder/socks
+       mkdir -v           $pkgdir/srv/zoneminder
+       chown -v http.http $pkgdir/srv/zoneminder
+       mkdir -v           $pkgdir/srv/zoneminder/socks
        chown -v http.http $pkgdir/srv/zoneminder/socks
 
        mkdir -pv          $pkgdir/srv/zoneminder/tmp
@@ -716,4 +718,3 @@ These warnings can be fixed by including these three lines on the end of the pac
 chmod 700 $pkgdir/usr/share/polkit-1/rules.d/
 chown polkitd $pkgdir/usr/share/polkit-1/rules.d/
 * README
-  
