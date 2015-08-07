@@ -1697,8 +1697,8 @@ package() {
    + https://bugs.launchpad.net/ubuntu/+source/zoneminder/+bug/1159361
 
    
-* Reinstall all
-  #+BEGIN_SRC sh :tangle ./reinstall-all.sh :shebang #!/bin/bash
+* Remove all
+  #+BEGIN_SRC sh :tangle ./remove-all.sh :shebang #!/bin/bash
     set -o nounset
     set -o verbose
 
@@ -1716,6 +1716,7 @@ package() {
     $RVF $ZONEMINDER_CACHE_DIR
     $RVF /var/log/zoneminder
     $RVF /srv/zoneminder
+    $RVF /run/zoneminder
 
     $REMOVE php-cgi
     $REMOVE php-gd
