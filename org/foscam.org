@@ -193,13 +193,14 @@
      #+BEGIN_SRC conf
        [Sat Sep 13 09:59:53.761153 2014] [:error] [pid 12151] [client ::1:50028] PHP Warning:  chdir(): open_basedir restriction in effect. File(images) is not within the allowed path(s): (/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc:/srv/http/zoneminder) in /srv/http/zoneminder/skins/classic/views/zones.php on line 29, referer: http://localhost/zm/index.php
      #+END_SRC
-  9. [X] Enable Control http://192.168.1.14/zoneminder/?view=options
-     1. [X] OPT_CONTROL
-     2. [X] sudo systemctl restart zoneminder
-  10. [ ] http://192.168.1.14/zoneminder/?view=monitor&mid=1
-      1. [ ] Control Type :: Foscam F18608W (Note: seemed not to work)
-      2. [ ] Control Type :: Foscam F18908W
-      3. [ ] Control Address :: 192.168.1.31
+  9. [ ] Enable Control http://192.168.1.41/zoneminder/?view=options
+     1. [ ] OPT_CONTROL
+  10. [ ] http://192.168.1.41/zoneminder/?view=monitor&mid=1
+      1. [ ] Controllable
+      2. [ ] Control Type :: Foscam F18608W (Note: seemed not to work)
+      3. [ ] Control Type :: Foscam F18908W
+      4. [ ] Control Address :: 192.168.1.31
+      5. [ ] Leave Control Device blank
 * File(images) is not within the allowed path(s)
    1. http://www.zoneminder.com/wiki/index.php/FAQ
    2. [ ] Add /var to basedir in php.ini

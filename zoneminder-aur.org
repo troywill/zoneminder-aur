@@ -283,7 +283,7 @@
            -DZM_CONTENTDIR=/var/cache/zoneminder \
            -DZM_LOGDIR=/var/log/zoneminder \
            -DZM_RUNDIR=/run/zoneminder \
-           -DZM_TMPDIR=/srv/zoneminder/tmp \
+           -DZM_TMPDIR=/var/lib/zoneminder/temp \
            -DZM_SOCKDIR=/srv/zoneminder/socks .
  
      make V=0
@@ -556,8 +556,8 @@
        mkdir -v           $pkgdir/srv/zoneminder/socks
        chown -v http.http $pkgdir/srv/zoneminder/socks
 
-       mkdir -pv          $pkgdir/srv/zoneminder/tmp
-       chown -v http.http $pkgdir/srv/zoneminder/tmp
+       mkdir -pv          $pkgdir/var/lib/zoneminder/temp
+       chown -v http.http $pkgdir/var/lib/zoneminder/temp
 
        chown -v  http.http $pkgdir/etc/zm.conf 
        chmod 0700          $pkgdir/etc/zm.conf
@@ -751,3 +751,17 @@ These warnings can be fixed by including these three lines on the end of the pac
 chmod 700 $pkgdir/usr/share/polkit-1/rules.d/
 chown polkitd $pkgdir/usr/share/polkit-1/rules.d/
 * README
+* /var/lib/zoneminder/{events,images,sock,swap,temp} See zoneminder.f21.spec
+  1. CMakeLists.txt Fedora 21
+     #+BEGIN_SRC sh
+       # Reassign some variables if a target distro has been specified
+       if((ZM_TARGET_DISTRO STREQUAL "f21") OR (ZM_TARGET_DISTRO STREQUAL "f20"))
+               set(ZM_RUNDIR "/var/run/zoneminder")
+               set(ZM_SOCKDIR "/var/lib/zoneminder/sock")
+               set(ZM_TMPDIR "/var/lib/zoneminder/temp")
+               set(ZM_LOGDIR "/var/log/zoneminder")
+     #+END_SRC
+  2. I changed from -DZM_TMPDIR=/srv/zoneminder/tmp to -DZM_TMPDIR=/var/lib/zoneminder/temp because Fedora uses it
+     + The default is /var/tmp/zm
+  3. I changed CREATE_ZONEMINDER_DIRECTORIES to create the new ZM_TMPDIR
+       
