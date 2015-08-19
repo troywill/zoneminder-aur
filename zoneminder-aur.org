@@ -116,7 +116,7 @@
      _pkgname=zoneminder
      pkgname=zoneminder
      pkgver=1.28.1
-     pkgrel=4
+     pkgrel=5
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -125,8 +125,8 @@
    #+BEGIN_SRC sh
      _pkgname=zoneminder
      pkgname=zoneminder-git
-     pkgver=1.28.100
-     pkgrel=4
+     pkgver=1.28.103
+     pkgrel=1
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -170,7 +170,7 @@
          zoneminder-tmpfile.conf
      )
      sha256sums=('e55fa6ce1fd6c27912cd1de67fca3f80fad579f330020a384dc82838704d11ba'
-                 'c2ca71ec57e53da040de61ff212ac063574e5ddfb4c333b70be060d5ec26c62c'
+                 'ff7382b38ac07dadead0ad4d583e3dbcf8da4aaa06b76d048ee334f69f95db67'
                  '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3'
                  'cc8af737c3c07750fc71317c81999376e4bbb39da883780164a8747b3d7c95a7'
                 )
@@ -186,7 +186,7 @@
      )
      # Because the source is not static, skip Git checksum:
      sha256sums=('SKIP'
-                 'c2ca71ec57e53da040de61ff212ac063574e5ddfb4c333b70be060d5ec26c62c'
+                 'ff7382b38ac07dadead0ad4d583e3dbcf8da4aaa06b76d048ee334f69f95db67'
                  '7eb2f26246e240e23502da44854d5ed14485aa11bc448ad73e9b57fee13f00a3'
                  'cc8af737c3c07750fc71317c81999376e4bbb39da883780164a8747b3d7c95a7'
                 )
@@ -284,7 +284,7 @@
            -DZM_LOGDIR=/var/log/zoneminder \
            -DZM_RUNDIR=/run/zoneminder \
            -DZM_TMPDIR=/var/lib/zoneminder/temp \
-           -DZM_SOCKDIR=/srv/zoneminder/socks .
+           -DZM_SOCKDIR=/var/lib/zoneminder/sock .
  
      make V=0
    #+END_SRC
@@ -300,8 +300,8 @@
       AllowOverride None
       Order allow,deny
       Allow from all
-      # Provide PHP access to important directories
-      php_admin_value open_basedir "/srv/http/:/home/:/tmp/:/usr/share/pear/:/usr/share/webapps/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/srv/zoneminder/socks/:/var/log/zoneminder/"
+      # Provide PHP directory and file access, see http://php.net/manual/en/ini.core.php#ini.open-basedir
+      php_admin_value open_basedir "/tmp/:/etc/zm.conf:/srv/http/zoneminder/:/var/cache/zoneminder/:/var/lib/zoneminder/:/var/log/zoneminder/"
     </Directory>
 
     ScriptAlias /cgi-bin "/srv/http/cgi-bin"
@@ -490,33 +490,6 @@
      }
    #+END_SRC
 ** PACKAGE
-*** PACKAGE-GIT chunk
-    #+NAME: PACKAGE-GIT
-    #+BEGIN_SRC sh
-      package() {
-
-          cd $srcdir/$_pkgname
-
-          DESTDIR=$pkgdir make install
-
-          <<POLKIT_PERMISSIONS_CHUNK>>
-
-          <<CREATE_ZONEMINDER_DIRECTORIES>>
-
-          <<CREATE_AND_LINK_CONTENT_FOLDERS>>
-
-          <<CREATE_CGI_BIN_LINK>>
-
-          <<CHANGE_OWNER_AND_GROUP>>
-
-          <<LINK_CAMBOZOLA>>
-
-          <<INSTALL_CONF_FILES>>
-
-          <<INSTALL_SYSTEMD_TMPFILES_CONF>>
-
-      }
-    #+END_SRC
 *** PACKAGE chunk
     #+NAME: PACKAGE
     #+BEGIN_SRC sh
@@ -551,11 +524,11 @@
        mkdir -pv           $pkgdir/var/{cache/zoneminder,log/zoneminder}
        chown -Rv http.http $pkgdir/var/{cache/zoneminder,log/zoneminder}
 
-       mkdir -v           $pkgdir/srv/zoneminder
-       chown -v http.http $pkgdir/srv/zoneminder
-       mkdir -v           $pkgdir/srv/zoneminder/socks
-       chown -v http.http $pkgdir/srv/zoneminder/socks
+       # corresponds to -DZM_SOCKDIR=/var/lib/zoneminder/sock
+       mkdir -pv          $pkgdir/var/lib/zoneminder/sock
+       chown -v http.http $pkgdir/var/lib/zoneminder/sock
 
+       # corresponds to -DZM_TMPDIR=/var/lib/zoneminder/temp
        mkdir -pv          $pkgdir/var/lib/zoneminder/temp
        chown -v http.http $pkgdir/var/lib/zoneminder/temp
 
@@ -648,6 +621,33 @@
      #+BEGIN_SRC sh
        install -Dm644 ../zoneminder-tmpfile.conf "$pkgdir"/usr/lib/tmpfiles.d/zoneminder.conf
      #+END_SRC
+*** PACKAGE-GIT chunk
+    #+NAME: PACKAGE-GIT
+    #+BEGIN_SRC sh
+      package() {
+
+          cd $srcdir/$_pkgname
+
+          DESTDIR=$pkgdir make install
+
+          <<POLKIT_PERMISSIONS_CHUNK>>
+
+          <<CREATE_ZONEMINDER_DIRECTORIES>>
+
+          <<CREATE_AND_LINK_CONTENT_FOLDERS>>
+
+          <<CREATE_CGI_BIN_LINK>>
+
+          <<CHANGE_OWNER_AND_GROUP>>
+
+          <<LINK_CAMBOZOLA>>
+
+          <<INSTALL_CONF_FILES>>
+
+          <<INSTALL_SYSTEMD_TMPFILES_CONF>>
+
+      }
+    #+END_SRC
 *** ERROR TABLE
 |      |      | ERROR                                                                                                                    | FIX                                                             |
 |------+------+--------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------|
@@ -727,6 +727,7 @@
     #+END_SRC
     
 * Changelog
+** Tuesday, August 18, 2015
 ** Friday, August 07, 2015
    1. -DZM_RUNDIR=/srv/zoneminder => -DZM_RUNDIR=/run/zoneminder
 ** Thursday, January 22, 2015
@@ -764,4 +765,13 @@ chown polkitd $pkgdir/usr/share/polkit-1/rules.d/
   2. I changed from -DZM_TMPDIR=/srv/zoneminder/tmp to -DZM_TMPDIR=/var/lib/zoneminder/temp because Fedora uses it
      + The default is /var/tmp/zm
   3. I changed CREATE_ZONEMINDER_DIRECTORIES to create the new ZM_TMPDIR
+  4. I changed from -DZM_SOCKDIR=/srv/zoneminder/socks to /var/lib/zoneminder/sock
+  5. I changed 
+     
+     
        
+* TODO
+  1. http://httpd.apache.org/docs/2.4/upgrading.html
+  2. http://www.zoneminder.com/wiki/index.php/Fedora
+  3. Document Firefox and Chromium
+  4. Document refused apache

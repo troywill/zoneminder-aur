@@ -18,6 +18,7 @@ $RVF $ZONEMINDER_CACHE_DIR
 $RVF /var/log/zoneminder
 $RVF /srv/zoneminder
 $RVF /run/zoneminder
+$RVF /var/lib/zoneminder
 
 $REMOVE php-cgi
 $REMOVE php-gd

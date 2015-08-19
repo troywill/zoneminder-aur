@@ -1717,6 +1717,7 @@ package() {
     $RVF /var/log/zoneminder
     $RVF /srv/zoneminder
     $RVF /run/zoneminder
+    $RVF /var/lib/zoneminder
 
     $REMOVE php-cgi
     $REMOVE php-gd
@@ -1733,6 +1734,20 @@ package() {
     $REMOVE mariadb-clients
     $RVF /var/lib/mysql/
   #+END_SRC
+* Post install
+  #+BEGIN_SRC sh :tangle ./post-install.sh :shebang #!/bin/bash
+    set -o verbose
+    set -o nounset
+
+    sudo cp -v /tmp/php.ini.zoneminder /etc/php/php.ini
+    sudo emacs /etc/php/php.ini
+    sudo cp -v /tmp/httpd.conf.zoneminder /etc/httpd/conf/httpd.conf
+
+    ./mysql.sh
+
+    sudo systemctl start zoneminder
+  #+END_SRC
+  
 * MYSQL
   #+BEGIN_SRC sh :tangle ./mysql.sh :shebang #!/usr/bin/bash
     MYSQL_USER=root
@@ -1749,4 +1764,20 @@ package() {
 
     echo 'grant lock tables, alter,select,insert,update,delete on zm.* to 'zmuser'@localhost identified by "zmpass";' | mysql -p --user $MYSQL_USER mysql
 
+  #+END_SRC
+* Clear buffers
+  #+BEGIN_SRC sh :tangle ./clear-buffers.sh :shebang #!/bin/bash
+    set -o verbose
+    set -o nounset
+
+    MYSQL_USER=root
+
+    sudo systemctl stop zoneminder
+
+    sudo rm -rv /var/lib/zoneminder/temp/*
+    sudo rm -v /var/lib/zoneminder/sock/*
+
+    echo 'DELETE FROM Logs;' | mysql --user $MYSQL_USER zm
+
+    sudo systemctl start zoneminder
   #+END_SRC
