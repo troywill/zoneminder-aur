@@ -1745,6 +1745,7 @@ package() {
 
     ./mysql.sh
 
+    sudo systemctl daemon-reload
     sudo systemctl start zoneminder
   #+END_SRC
   

@@ -9,4 +9,5 @@ sudo cp -v /tmp/httpd.conf.zoneminder /etc/httpd/conf/httpd.conf
 
 ./mysql.sh
 
+sudo systemctl daemon-reload
 sudo systemctl start zoneminder
