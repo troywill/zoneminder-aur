@@ -1,3 +1,37 @@
+* Monday, November 2, 2015
+  1. [ ] http://192.168.1.43/zoneminder
+  2. [ ] Add New Monitor
+     1. [ ] General/Source Type :: Remote
+     2. [ ] Source/Remote Host Name :: admin:@192.168.1.31
+     3. [ ] Remote Host Path :: videostream.cgi?resolution=32&rate=15
+     4. [ ] Capture Width (pixels) :: 640
+     5. [ ] Capture Height (pixels) :: 480
+  3. [ ] Enable Control http://192.168.1.43/zoneminder/?view=options
+     1. [ ] OPT_CONTROL
+     2. [ ] Save
+  4. [ ] http://192.168.1.43/zoneminder/?view=monitor&mid=1
+     1. [ ] Control/Controllable
+     3. [ ] Control Type :: Foscam F18908W (Note: Foscam F18608W seemed not to work)
+     4. [ ] Control Address :: 192.168.1.31
+     5. [ ] Leave Control Device blank
+  2. [ ] Add New Monitor
+     1. [ ] General/Source Type :: Remote
+     2. [ ] Source/Remote Host Name :: admin:@192.168.1.32
+     3. [ ] Remote Host Path :: videostream.cgi?resolution=32&rate=15
+     4. [ ] Capture Width (pixels) :: 640
+     5. [ ] Capture Height (pixels) :: 480
+  3. [ ] Enable Control http://192.168.1.43/zoneminder/?view=options
+     1. [ ] OPT_CONTROL
+     2. [ ] Save
+  4. [ ] http://192.168.1.43/zoneminder/?view=monitor&mid=1
+     1. [ ] Control/Controllable
+     3. [ ] Control Type :: Foscam F18908W (Note: Foscam F18608W seemed not to work)
+     4. [ ] Control Address :: 192.168.1.31
+     5. [ ] Leave Control Device blank
+
+	
+
+  
 * Introduction
   These are the steps I took to get a Foscam F18910W camera working with Zoneminder.
 * videostream.cgi
