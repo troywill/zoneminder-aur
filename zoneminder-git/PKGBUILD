@@ -7,10 +7,11 @@
 # Contributor: Ross melin                <rdmelin@gmail.com>
 # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
 # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+# Contributor: Joe Julian                <me@joejulian.name>
 # Orginally based on a Debian Squeeze package
 _pkgname=zoneminder
 pkgname=zoneminder-git
-pkgver=1.28.104
+pkgver=0 # use the pkgver script
 pkgrel=1
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm armv7h )
@@ -53,7 +54,9 @@ sha256sums=('SKIP'
      
 pkgver() {
     cd "$_pkgname"
-    printf "%s.r%s.%s.%s" "$pkgver" "$(git rev-list --count HEAD)" "$pkgrel" "$(git rev-parse --short HEAD)"
+        "$(git describe --tags --long | sed 's/^v//;s/-g.*$/-/;s/-/./g')" \
+        "$(git rev-list --count HEAD)" \
+        "$pkgrel" "$(git rev-parse --short HEAD)"
 }
 
 build() {
