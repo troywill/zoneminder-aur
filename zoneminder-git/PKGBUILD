@@ -7,6 +7,7 @@
 # Contributor: Ross melin                <rdmelin@gmail.com>
 # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
 # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+# Contributor: Joe Julian                <me@joejulian.name>
 # Orginally based on a Debian Squeeze package
 _pkgname=zoneminder
 pkgname=zoneminder-git
@@ -71,7 +72,8 @@ build() {
           -DZM_LOGDIR=/var/log/zoneminder \
           -DZM_RUNDIR=/run/zoneminder \
           -DZM_TMPDIR=/var/lib/zoneminder/temp \
-          -DZM_SOCKDIR=/var/lib/zoneminder/sock .
+          -DZM_SOCKDIR=/var/lib/zoneminder/sock \
+          -DPOLKIT_PREFIX=/usr .
      
     make V=0
 }
