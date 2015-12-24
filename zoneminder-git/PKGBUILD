@@ -59,6 +59,11 @@ pkgver() {
         "$pkgrel" "$(git rev-parse --short HEAD)"
 }
 
+prepare() {
+    cd $srcdir/$_pkgname
+    git submodule update --init --recursive
+}
+
 build() {
     cd $srcdir/$_pkgname
 
