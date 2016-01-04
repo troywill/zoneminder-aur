@@ -107,7 +107,7 @@
    #+BEGIN_SRC sh
      pkgver() {
          cd "$_pkgname"
-         # printf "%s.r%s.%s.%s" "$pkgver" "$(git rev-list --count HEAD)" "$pkgrel" "$(git rev-parse --short HEAD)"
+         # See https://wiki.archlinux.org/index.php/VCS_package_guidelines#The_pkgver.28.29_function
          git describe --long | sed 's/^v-//;s/\([^-]*-g\)/r\1/;s/-/./g'
      }
    #+END_SRC
