@@ -107,7 +107,8 @@
    #+BEGIN_SRC sh
      pkgver() {
          cd "$_pkgname"
-         printf "%s.r%s.%s.%s" "$pkgver" "$(git rev-list --count HEAD)" "$pkgrel" "$(git rev-parse --short HEAD)"
+         # printf "%s.r%s.%s.%s" "$pkgver" "$(git rev-list --count HEAD)" "$pkgrel" "$(git rev-parse --short HEAD)"
+         git describe --long | sed 's/^v-//;s/\([^-]*-g\)/r\1/;s/-/./g'
      }
    #+END_SRC
 ** PACKAGE VERSION DATA
@@ -125,7 +126,7 @@
    #+BEGIN_SRC sh
      _pkgname=zoneminder
      pkgname=zoneminder-git
-     pkgver=1.28.104
+     pkgver=1.29.0
      pkgrel=1
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
