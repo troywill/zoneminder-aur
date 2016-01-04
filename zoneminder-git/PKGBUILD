@@ -1,5 +1,4 @@
 # Maintainer: Troy Will <troydwill at gmail dot com>
-# Contributor: Charles Spence IV         <cspence@unomaha.edu>
 # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
 # Contributor: Jacek Burghardt           <jacek@hebe.us>
 # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
@@ -7,11 +6,12 @@
 # Contributor: Ross melin                <rdmelin@gmail.com>
 # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
 # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
-# Contributor: Joe Julian                <me@joejulian.name>
+# Contributor: Charles Spence IV         <cspence@unomaha.edu>
+# Contributor: Joe Julian                <me@joejulian.name>     
 # Orginally based on a Debian Squeeze package
 _pkgname=zoneminder
 pkgname=zoneminder-git
-pkgver=0 # use the pkgver script
+pkgver=1.29.0
 pkgrel=1
 pkgdesc='Capture, analyse, record and monitor video security cameras'
 arch=( i686 x86_64 mips64el arm armv7h )
@@ -54,12 +54,11 @@ sha256sums=('SKIP'
      
 pkgver() {
     cd "$_pkgname"
-        "$(git describe --tags --long | sed 's/^v//;s/-g.*$/-/;s/-/./g')" \
-        "$(git rev-list --count HEAD)" \
-        "$pkgrel" "$(git rev-parse --short HEAD)"
+    # See https://wiki.archlinux.org/index.php/VCS_package_guidelines#The_pkgver.28.29_function
+    git describe --long | sed 's/^v-//;s/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
-prepare() {
+prepare () {
     cd $srcdir/$_pkgname
     git submodule update --init --recursive
 }

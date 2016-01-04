@@ -93,7 +93,6 @@
    #+NAME: CONTRIBUTORS
    #+BEGIN_SRC conf :padline no
      # Maintainer: Troy Will <troydwill at gmail dot com>
-     # Contributor: Charles Spence IV         <cspence@unomaha.edu>
      # Contributor: /dev/rs0                  </dev/rs0@secretco.de.com>
      # Contributor: Jacek Burghardt           <jacek@hebe.us>
      # Contributor: Vojtech Aschenbrenner     <v@asch.cz>
@@ -101,6 +100,8 @@
      # Contributor: Ross melin                <rdmelin@gmail.com>
      # Contributor (Parabola): Márcio Silva   <coadde@lavabit.com>
      # Contributor (Parabola): André Silva    <emulatorman@lavabit.com>
+     # Contributor: Charles Spence IV         <cspence@unomaha.edu>
+     # Contributor: Joe Julian                <me@joejulian.name>     
      # Orginally based on a Debian Squeeze package
    #+END_SRC
 ** pkgver-git
