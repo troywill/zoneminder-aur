@@ -55,6 +55,8 @@
      
           <<pkgver-git>>
 
+          <<PREPARE-GIT>>
+	  
           <<BUILD-GIT>>
      
           <<PACKAGE-GIT>>
@@ -191,6 +193,14 @@
                  '043d77a995553c533d62f48db4b719d29cf6c7074f215d866130e97be57ed646'
                  'cc8af737c3c07750fc71317c81999376e4bbb39da883780164a8747b3d7c95a7'
                 )
+   #+END_SRC
+** PREPARE-GIT
+   #+NAME: PREPARE-GIT
+   #+BEGIN_SRC sh
+     prepare () {
+         cd $srcdir/$_pkgname
+         git submodule update --init --recursive
+     }
    #+END_SRC
 ** BUILD
 *** Changelog
