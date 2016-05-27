@@ -4,11 +4,11 @@ s|^LoadModule mpm_event_module modules/mod_mpm_event.so$|#&\nLoadModule mpm_pref
 # Zoneminder needs Apache configured to permit CGI execution
 \|^\t#LoadModule cgi_module modules/mod_cgi.so$| s|\t#|\t|;
 
-# libphp5
-\|^LoadModule php5_module modules/libphp5.so$|d;
-s|^#*LoadModule rewrite_module modules/mod_rewrite.so$|&\nLoadModule php5_module modules/libphp5.so|;
-\|^Include /etc/httpd/conf/extra/php5_module.conf|d;
-s|^Include conf/extra/httpd-default.conf$|&\nInclude /etc/httpd/conf/extra/php5_module.conf|;
+# libphp7
+\|^LoadModule php7_module modules/libphp7.so$|d;
+s|^#*LoadModule rewrite_module modules/mod_rewrite.so$|&\nLoadModule php7_module modules/libphp7.so|;
+\|^Include /etc/httpd/conf/extra/php7_module.conf|d;
+s|^Include conf/extra/httpd-default.conf$|&\nInclude /etc/httpd/conf/extra/php7_module.conf|;
 
 # Include httpd-zoneminder.conf
 \|^Include /etc/httpd/conf/extra/httpd-zoneminder.conf$|d;

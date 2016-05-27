@@ -115,12 +115,13 @@
      }
    #+END_SRC
 ** PACKAGE VERSION DATA
+   + See 
    #+NAME: PACKAGE_VERSION_DATA
    #+BEGIN_SRC sh
      _pkgname=zoneminder
      pkgname=zoneminder
-     pkgver=1.28.1
-     pkgrel=5
+     pkgver=1.29.0
+     pkgrel=2
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
@@ -164,19 +165,23 @@
    #+END_SRC
 ** SOURCES
    See https://github.com/ZoneMinder/ZoneMinder/releases
+   + TDW git submodule oddity
    
    #+NAME: SOURCES
    #+BEGIN_SRC sh
      source=(
-         https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+         # https://github.com/ZoneMinder/ZoneMinder/archive/v$pkgver.tar.gz
+         https://github.com/ZoneMinder/ZoneMinder/releases/download/v$pkgver/ZoneMinder-$pkgver.tar.gz
          httpd-zoneminder.conf
          zoneminder.service
          zoneminder-tmpfile.conf
+         zm_rtp_ctrl.h.quick_fix_for_gcc6.diff
      )
-     sha256sums=('e55fa6ce1fd6c27912cd1de67fca3f80fad579f330020a384dc82838704d11ba'
+     sha256sums=('78c32c0cd969bc5e29ed030000ebec5c3a26cccb31fac08257a9f12781f1295c'
                  'ff7382b38ac07dadead0ad4d583e3dbcf8da4aaa06b76d048ee334f69f95db67'
                  '043d77a995553c533d62f48db4b719d29cf6c7074f215d866130e97be57ed646'
                  'cc8af737c3c07750fc71317c81999376e4bbb39da883780164a8747b3d7c95a7'
+                 '312f5fb1ab995b8b5510c16f3e1f1027856c105c37f926f76126027cb8860b96'
                 )
    #+END_SRC
 
@@ -267,11 +272,11 @@
    #+BEGIN_SRC sh
      build() {
          cd $srcdir/ZoneMinder-$pkgver
+         patch src/zm_rtp_ctrl.h ../zm_rtp_ctrl.h.quick_fix_for_gcc6.diff
 
          <<CMAKE_CHUNK>>
      }
    #+END_SRC
-   
 *** BUILD-GIT chunk
    #+NAME: BUILD-GIT
    #+BEGIN_SRC sh
@@ -412,9 +417,9 @@
       Apache configuration
       --------------------
       Edit /etc/httpd/conf/httpd.conf and add the line:
-        "LoadModule php5_module modules/libphp5.so"
+        "LoadModule php7_module modules/libphp7.so"
       and:
-        "Include /etc/httpd/conf/extra/php5_module.conf"
+        "Include /etc/httpd/conf/extra/php7_module.conf"
         "Include /etc/httpd/conf/extra/httpd-zoneminder.conf"
     #+END_SRC
 *** POST_INSTALL_SYSTEMD_TMPFILES_CHUNK
@@ -483,8 +488,8 @@
 
      ==> Disable http with php if it isn't needed with others servers, 
      ==> comment or remove that lines in /etc/httpd/conf/httpd.conf:
-     ==> "LoadModule php5_module modules/libphp5.so"
-     ==> "Include /etc/httpd/conf/extra/php5_module.conf"
+     ==> "LoadModule php7_module modules/libphp7.so"
+     ==> "Include /etc/httpd/conf/extra/php7_module.conf"
 
      ==> Remove line in /etc/httpd/conf/httpd.conf:
      ==> "Include /etc/httpd/conf/extra/httpd-zoneminder.conf"
@@ -676,7 +681,7 @@
       
       <<MOD_CGI.SED>>
       
-      <<LIBPHP5.SED>>
+      <<LIBPHP7.SED>>
       
       <<HTTPD-ZONEMINDER.CONF.SED>>    
     #+END_SRC
@@ -695,14 +700,14 @@
      #+END_SRC
 ***** Notes:
       1. ^[[:space:]]+ is a regular expression that matches beginning of line and any number of whitespace characters
-**** LIBPHP5.SED
-     #+NAME: LIBPHP5.SED
+**** LIBPHP7.SED
+     #+NAME: LIBPHP7.SED
      #+BEGIN_SRC conf
-       # libphp5
-       \|^LoadModule php5_module modules/libphp5.so$|d;
-       s|^#*LoadModule rewrite_module modules/mod_rewrite.so$|&\nLoadModule php5_module modules/libphp5.so|;
-       \|^Include /etc/httpd/conf/extra/php5_module.conf|d;
-       s|^Include conf/extra/httpd-default.conf$|&\nInclude /etc/httpd/conf/extra/php5_module.conf|;
+       # libphp7
+       \|^LoadModule php7_module modules/libphp7.so$|d;
+       s|^#*LoadModule rewrite_module modules/mod_rewrite.so$|&\nLoadModule php7_module modules/libphp7.so|;
+       \|^Include /etc/httpd/conf/extra/php7_module.conf|d;
+       s|^Include conf/extra/httpd-default.conf$|&\nInclude /etc/httpd/conf/extra/php7_module.conf|;
      #+END_SRC
 **** HTTPD-ZONEMINDER.CONF.SED
      #+NAME: HTTPD-ZONEMINDER.CONF.SED
