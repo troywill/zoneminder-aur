@@ -130,8 +130,8 @@
    #+BEGIN_SRC sh
      _pkgname=zoneminder
      pkgname=zoneminder-git
-     pkgver=1.29.0
-     pkgrel=3
+     pkgver=1.29.1
+     pkgrel=1
      pkgdesc='Capture, analyse, record and monitor video security cameras'
      <<ARCH>>
    #+END_SRC
