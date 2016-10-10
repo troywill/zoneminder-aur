@@ -56,7 +56,7 @@ sha256sums=('0a7378835398a720f2b5ef7723415cf5cba9170cf72753631916b30d9f8160a2'
      
 build() {
     cd $srcdir/ZoneMinder-$pkgver
-    patch src/zm_rtp_ctrl.h ../zm_rtp_ctrl.h.quick_fix_for_gcc6.diff
+    # patch src/zm_rtp_ctrl.h ../zm_rtp_ctrl.h.quick_fix_for_gcc6.diff
 
     # ZM_PERL_SUBPREFIX=/lib/perl5 flag added to force Perl modules
     # to /usr/lib/perl5/ on non i686 architectures

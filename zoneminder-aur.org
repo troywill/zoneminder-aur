@@ -278,7 +278,7 @@
    #+BEGIN_SRC sh
      build() {
          cd $srcdir/ZoneMinder-$pkgver
-         patch src/zm_rtp_ctrl.h ../zm_rtp_ctrl.h.quick_fix_for_gcc6.diff
+         # patch src/zm_rtp_ctrl.h ../zm_rtp_ctrl.h.quick_fix_for_gcc6.diff
 
          <<CMAKE_CHUNK>>
      }
